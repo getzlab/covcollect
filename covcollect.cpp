@@ -16,11 +16,6 @@ void cc_walker::walk_all() {
    walker::walk(intervals);
 }
 
-void cc_walker::walk(const SeqLib::GenomicRegion& region) {
-   printf("%d:%d-%d\n", region.chr, region.pos1, region.pos2);
-   walker::walk(region);
-}
-
 bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
    // this is the first read in the pair
    std::string read_name = record.Qname();

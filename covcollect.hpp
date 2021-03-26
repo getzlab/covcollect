@@ -22,7 +22,6 @@ class cc_walker : public walker::walker {
    bool walk_apply(const SeqLib::BamRecord& record);
    void load_intervals(uint32_t pad);
    void walk_all();
-   void walk(const SeqLib::GenomicRegion& region);
 
    cc_walker(const std::string& bam_in, const std::string& interval_list) : walker(bam_in), interval_list_path(interval_list) {}
 
