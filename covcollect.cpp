@@ -12,12 +12,31 @@ void cc_walker::load_intervals(uint32_t pad) {
    for(auto& region : intervals) region.Pad(pad);
 }
 
-void cc_walker::walk() {
+void cc_walker::walk_all() {
    walker::walk(intervals);
 }
 
+void cc_walker::walk(const SeqLib::GenomicRegion& region) {
+   printf("%d:%d-%d\n", region.chr, region.pos1, region.pos2);
+   walker::walk(region);
+}
+
 bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
-   return 0;
+   // this is the first read in the pair
+   std::string read_name = record.Qname();
+   if(read_cache.find(read_name) == read_cache.end()) {
+      read_cache.emplace(
+        read_name,
+        (read_boundary) {
+	  (uint32_t) record.Position(),
+	  (uint32_t) record.PositionEnd(),
+	  (uint32_t) record.GetCigar().NumQueryConsumed()
+        }
+      );
+   } else {
+      printf("%d\n", read_cache[read_name].start);
+   }
+   return 1;
 }
 
 }
@@ -28,6 +47,6 @@ int main(int argc, char** argv) {
 
    CC::cc_walker w = CC::cc_walker(args.bam_in, args.input_file);
    w.load_intervals(151);
-   w.walk();
+   w.walk_all();
    return 0;
 }
