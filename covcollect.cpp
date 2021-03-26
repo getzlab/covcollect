@@ -7,8 +7,9 @@ using namespace std;
 
 namespace CC {
 
-void cc_walker::load_intervals() {
+void cc_walker::load_intervals(uint32_t pad) {
    intervals.ReadBED(interval_list_path, header);
+   for(auto& region : intervals) region.Pad(pad);
 }
 
 void cc_walker::walk() {
@@ -26,7 +27,7 @@ int main(int argc, char** argv) {
    if(!walker::basic_argparse(argc, argv, &args)) exit(1);
 
    CC::cc_walker w = CC::cc_walker(args.bam_in, args.input_file);
-   w.load_intervals();
+   w.load_intervals(151);
    w.walk();
    return 0;
 }
