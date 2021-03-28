@@ -15,7 +15,7 @@ typedef struct r {
    uint32_t start;
    uint32_t end;
    uint32_t ref_consumed;
-} read_boundary;
+} read_boundary_t;
 
 class cc_walker : public walker::walker {
    public:
@@ -29,7 +29,7 @@ class cc_walker : public walker::walker {
    std::string interval_list_path;
    SeqLib::GenomicRegionCollection<> intervals;
 
-   std::unordered_map<std::string, read_boundary> read_cache;
+   std::unordered_map<std::string, read_boundary_t> read_cache;
 
    uint32_t curstart = 0;
    uint32_t curend = 0;

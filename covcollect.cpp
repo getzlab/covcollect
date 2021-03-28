@@ -22,7 +22,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
    if(read_cache.find(read_name) == read_cache.end()) {
       read_cache.emplace(
         read_name,
-        (read_boundary) {
+        (read_boundary_t) {
 	  (uint32_t) record.Position(),
 	  (uint32_t) record.PositionEnd(),
 	  (uint32_t) record.GetCigar().NumQueryConsumed()
