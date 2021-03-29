@@ -14,7 +14,6 @@ namespace CC {
 typedef struct r {
    uint32_t start;
    uint32_t end;
-   uint32_t ref_consumed;
 } read_boundary_t;
 
 typedef struct t {

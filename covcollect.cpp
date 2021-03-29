@@ -51,8 +51,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
         read_name,
         (read_boundary_t) {
 	  (uint32_t) record.Position(),
-	  (uint32_t) record.PositionEnd(),
-	  (uint32_t) record.GetCigar().NumQueryConsumed()
+	  (uint32_t) record.PositionEnd()
         }
       );
 
