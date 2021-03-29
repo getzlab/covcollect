@@ -40,8 +40,13 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
       }
       read_cache.clear();
 
-      // TODO: write to file
-      printf("%d:%d-%d -- %d/%d\n", cur_region.chr, cur_region.pos1, cur_region.pos2, target_coverage.n_corrected, target_coverage.n_uncorrected);
+      fprintf(outfile, "%s\t%d\t%d\t%d\t%d\n",
+        header.IDtoName(cur_region.chr).c_str(),
+        cur_region.pos1,
+        cur_region.pos2,
+        target_coverage.n_corrected,
+        target_coverage.n_uncorrected
+      );
       target_coverage = {0, 0};
    }
 
@@ -87,6 +92,9 @@ int main(int argc, char** argv) {
 
    CC::cc_walker w = CC::cc_walker(args.bam_in, args.input_file);
    w.load_intervals(151);
+   if(!w.set_output_file(args.output_file)) exit(1);
+
    w.walk_all();
+
    return 0;
 }
