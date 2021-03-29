@@ -35,6 +35,8 @@ class cc_walker : public walker::walker {
    std::string interval_list_path;
    SeqLib::GenomicRegionCollection<> intervals;
    target_counts_t target_coverage = {0, 0};
+   size_t cur_region_idx = 0;
+   SeqLib::GenomicRegion cur_region;
 
    std::unordered_map<std::string, read_boundary_t> read_cache;
 
