@@ -25,15 +25,27 @@ uint32_t cc_walker::n_overlap(const SeqLib::GenomicRegion& region, uint32_t star
 }
 
 bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
+   std::string read_name = record.Qname();
+
    // if we've switched regions, flush the cache and write current counts
    size_t region_idx = reader.GetRegionIdx();
    if(region_idx != cur_region_idx) {
       cur_region = intervals[region_idx];
       cur_region_idx = region_idx;
+
+      // any reads left in the cache will all be singletons
+      for(const auto& read : read_cache) {
+	 target_coverage.n_corrected += n_overlap(cur_region, read_cache[read_name].start, read_cache[read_name].end);
+	 target_coverage.n_uncorrected += n_overlap(cur_region, read_cache[read_name].start, read_cache[read_name].end);
+      }
+      read_cache.clear();
+
+      // TODO: write to file
+      printf("%d:%d-%d -- %d/%d\n", cur_region.chr, cur_region.pos1, cur_region.pos2, target_coverage.n_corrected, target_coverage.n_uncorrected);
+      target_coverage = {0, 0};
    }
 
    // this is the first read in the pair; push to cache
-   std::string read_name = record.Qname();
    if(read_cache.find(read_name) == read_cache.end()) {
       read_cache.emplace(
         read_name,
@@ -60,6 +72,9 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
       // save coverage that doesn't account for overlaps for demo purposes
       target_coverage.n_uncorrected += n_overlap(cur_region, read_cache[read_name].start, read_cache[read_name].end) + 
 	n_overlap(cur_region, record.Position(), record.PositionEnd());
+
+      // remove from cache
+      read_cache.erase(read_name);
    }
 
    return 1;
