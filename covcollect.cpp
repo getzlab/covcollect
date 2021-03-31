@@ -17,6 +17,7 @@ void cc_walker::load_intervals(uint32_t pad) {
 }
 
 void cc_walker::walk_all() {
+   cur_region = intervals[0];
    walker::walk(intervals);
 }
 
@@ -31,13 +32,10 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
    // if we've switched regions, flush the cache and write current counts
    size_t region_idx = reader.GetRegionIdx();
    if(region_idx != cur_region_idx) {
-      cur_region = intervals[region_idx];
-      cur_region_idx = region_idx;
-
       // any reads left in the cache will all be singletons
       for(const auto& read : read_cache) {
-	 target_coverage.n_corrected += n_overlap(cur_region, read_cache[read_name].start, read_cache[read_name].end);
-	 target_coverage.n_uncorrected += n_overlap(cur_region, read_cache[read_name].start, read_cache[read_name].end);
+	 target_coverage.n_corrected += n_overlap(cur_region, read.second.start, read.second.end);
+	 target_coverage.n_uncorrected += n_overlap(cur_region, read.second.start, read.second.end);
       }
       read_cache.clear();
 
@@ -49,6 +47,22 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
         target_coverage.n_uncorrected
       );
       target_coverage = {0, 0};
+
+      // we may have skipped over multiple empty regions
+      for(size_t r = cur_region_idx + 1; r < region_idx; r++) {
+	 SeqLib::GenomicRegion gr = intervals[r];
+	 fprintf(outfile, "%s\t%d\t%d\t%d\t%d\n",
+	   header.IDtoName(gr.chr).c_str(),
+	   gr.pos1 + this->pad,
+	   gr.pos2 - this->pad,
+	   0,
+	   0
+	 );
+      }
+
+      // switch to next region
+      cur_region = intervals[region_idx];
+      cur_region_idx = region_idx;
    }
 
    // this is the first read in the pair; push to cache
@@ -92,7 +106,7 @@ int main(int argc, char** argv) {
    if(!walker::basic_argparse(argc, argv, &args)) exit(1);
 
    CC::cc_walker w = CC::cc_walker(args.bam_in, args.input_file);
-   w.load_intervals(151);
+   w.load_intervals(151); // TODO: allow this to be specifiable
    if(!w.set_output_file(args.output_file)) exit(1);
 
    w.walk_all();
