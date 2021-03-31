@@ -13,6 +13,7 @@ namespace CC {
 void cc_walker::load_intervals(uint32_t pad) {
    intervals.ReadBED(interval_list_path, header);
    for(auto& region : intervals) region.Pad(pad);
+   this->pad = pad;
 }
 
 void cc_walker::walk_all() {
@@ -20,8 +21,8 @@ void cc_walker::walk_all() {
 }
 
 uint32_t cc_walker::n_overlap(const SeqLib::GenomicRegion& region, uint32_t start, uint32_t end) {
-   if(start > region.pos2 || region.pos1 > end) return 0;
-   return MIN(region.pos2, end) - MAX(start, region.pos1);
+   if(start > region.pos2 - this->pad || region.pos1 + this->pad > end) return 0;
+   return MIN(region.pos2 - this->pad, end) - MAX(start, region.pos1 + this->pad);
 }
 
 bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
@@ -42,8 +43,8 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 
       fprintf(outfile, "%s\t%d\t%d\t%d\t%d\n",
         header.IDtoName(cur_region.chr).c_str(),
-        cur_region.pos1,
-        cur_region.pos2,
+        cur_region.pos1 + this->pad,
+        cur_region.pos2 - this->pad,
         target_coverage.n_corrected,
         target_coverage.n_uncorrected
       );

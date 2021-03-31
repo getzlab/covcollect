@@ -36,6 +36,7 @@ class cc_walker : public walker::walker {
    target_counts_t target_coverage = {0, 0};
    size_t cur_region_idx = 0;
    SeqLib::GenomicRegion cur_region;
+   uint32_t pad;
 
    std::unordered_map<std::string, read_boundary_t> read_cache;
 
