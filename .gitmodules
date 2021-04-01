@@ -1,3 +1,3 @@
 [submodule "walker"]
-	path = walker
+	path = src/walker
 	url = https://github.com/getzlab/walker.git
