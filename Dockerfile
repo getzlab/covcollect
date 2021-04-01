@@ -1,9 +1,9 @@
-FROM gcr.io/broad-getzlab-workflows/base_image:v0.0.2
+FROM gcr.io/broad-getzlab-workflows/base_image:v0.0.4
 
 WORKDIR build
-# build steps go here
-# remember to clear the build directory!
+COPY src .
+RUN make
 
 WORKDIR /app
 ENV PATH=$PATH:/app
-COPY <your script> .
+COPY covcollect .
