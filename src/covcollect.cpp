@@ -54,9 +54,8 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 		active_bins.emplace(i, (target_counts_t){0, 0});
 	}
 
-	// Cache read pairs
+	return 1;
 
-	// Write pairs
 }
 
 
