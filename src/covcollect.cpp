@@ -17,7 +17,7 @@ void cc_walker::load_intervals(uint32_t pad) {
 }
 
 void cc_walker::set_binwidth(uint32_t binwidth) {
-	this->binwidth = binwidth
+	this->binwidth = binwidth;
 }
 
 void cc_walker::walk_all() {
@@ -35,7 +35,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 
 	// Add bins
 	for(uint32_t i = lastbin + binwidth; i < record.PositionEnd(); i = i + binwidth) {
-		active_bins.emplace(i, (target_counts_t){0, 0})
+		active_bins.emplace(i, (target_counts_t){0, 0});
 	}
 
 	for (auto const &pair: active_bins) {
