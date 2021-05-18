@@ -27,7 +27,7 @@ class cc_walker : public walker::walker {
    void load_intervals(uint32_t pad);
    void set_binwidth(uint32_t binwidth);
    void walk_all();
-   uint32_t n_overlap(const SeqLib::GenomicRegion& region, uint32_t start, uint32_t end);
+   uint32_t n_overlap(const uint32_t binstart, uint32_t binend, uint32_t start, uint32_t end);
 
    cc_walker(const std::string& bam_in, const std::string& interval_list) : walker(bam_in), interval_list_path(interval_list) {}
 
