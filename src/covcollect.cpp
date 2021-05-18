@@ -44,12 +44,13 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 				bin.second.n_corrected,
 				bin.second.n_uncorrected
 			);
-			std::cout << "Erasing: " << bin.first << "\n";
 			active_bins.erase(bin.first);
-			std::cout << "Erased\n";
+			std::cout << "Erasing: " << bin.first << "\n";
 		}
 	}
+	std::cout << "Done writing\n";
 	if (curchr != record.ChrID()) {
+		std::cout << "New chrID: " << record.ChrID() << "\n";
 		curchr = record.ChrID();
 	}
 
