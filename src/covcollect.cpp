@@ -35,23 +35,42 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	std::string read_name = record.Qname();
 
 	// Write and delete
-//	std::cout << "\nwrite and delete: ";
+	std::cout << "\nwrite and delete: ";
 	uint64_t binmintrack = record.Position();
-	for (std::pair<uint64_t, target_counts_t> bin : active_bins) {
-		if (bin.first + binwidth < record.Position()) {
-			// TODO: update singletons and handle chr
-			fprintf(outfile, "%s\t%lu\t%d\t%d\n",
-				curchrname.c_str(),
-				bin.first,
-				bin.second.n_corrected,
-				bin.second.n_uncorrected
-			);
-//			std::cout << bin.first << ", ";
-			active_bins.erase(bin.first);
-		} else if (bin.first <= record.Position()) {
-			binmin = bin.first;
-		}
+
+	for (auto bin = active_bins.begin(); bin != active_bins.end();) {
+	   if(bin.first + binwidth < record.Position()) {
+		 fprintf(outfile, "%s\t%lu\t%d\t%d\n",
+				 curchrname.c_str(),
+				 bin.first,
+				 bin.second.n_corrected,
+				 bin.second.n_uncorrected
+				);
+	      it = active_bins.erase(it);
+	   }
+	   else {
+		  if (bin.first <= record.Position()) {
+			  binmin = bin.first;
+		  }
+	      it++;
+	   }
 	}
+
+//	for (std::pair<uint64_t, target_counts_t> bin : active_bins) {
+//		if (bin.first + binwidth < record.Position()) {
+//			// TODO: update singletons and handle chr
+//			fprintf(outfile, "%s\t%lu\t%d\t%d\n",
+//				curchrname.c_str(),
+//				bin.first,
+//				bin.second.n_corrected,
+//				bin.second.n_uncorrected
+//			);
+////			std::cout << bin.first << ", ";
+//			active_bins.erase(bin.first);
+//		} else if (bin.first <= record.Position()) {
+//			binmin = bin.first;
+//		}
+//	}
 
 	// Add bins
 //	std::cout << "\nAdd bins: ";
