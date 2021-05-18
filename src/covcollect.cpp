@@ -54,8 +54,8 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 		  if (bin->first <= record.Position()) {
 			  binmin = bin->first;
 		  }
-		  bin++;
 	   }
+	   bin++;
 	}
 
 	// TODO: check if missing regions
@@ -102,6 +102,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 				std::cout << "no Overlaps\n";
 				bin->second.n_corrected = bin->second.n_uncorrected;
 			}
+			bin++;
 		}
 
 		// remove from cache
