@@ -39,7 +39,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	std::cout << "record.PositionEnd(): " << record.PositionEnd() << "\n";
 	std::cout << "record.Position(): " << record.Position() << "\n";
 
-	start_new_bin = lastbin == 0 ? record.Position() : lastbin + binwidth;
+	uint32_t start_new_bin = lastbin == 0 ? record.Position() : lastbin + binwidth;
 	for(uint32_t i = start_new_bin; i < record.PositionEnd(); i = i + binwidth) {
 		active_bins.emplace(i, (target_counts_t){0, 0});
 	}
