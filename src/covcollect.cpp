@@ -83,6 +83,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 		 }
 	   );
     } else {
+    	throw runtime_error("pair!\n");
 
 		bool overlaps = MAX(0, (int32_t) read_cache[read_name].end - (int32_t) record.Position()) > 0;
 
