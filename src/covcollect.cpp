@@ -33,7 +33,10 @@ uint32_t cc_walker::n_overlap(const SeqLib::GenomicRegion& region, uint32_t star
 bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	std::string read_name = record.Qname();
 
-	std::cout << "Chromosome ID: " << record.ChrName() << "\n";
+	if (record.ChrName() != "1") {
+		std::cout << "Chromosome ID: " << record.ChrName() << "\n";
+		throw runtime_error("here");
+	}
 
 	// Write and delete
 	for (std::pair<uint32_t, target_counts_t> bin : active_bins) {
