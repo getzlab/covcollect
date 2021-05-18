@@ -18,6 +18,7 @@ void cc_walker::load_intervals(uint32_t pad) {
 
 void cc_walker::set_binwidth(uint32_t binwidth) {
 	this->binwidth = binwidth;
+	this->lastbin = 0;
 }
 
 void cc_walker::walk_all() {
@@ -34,7 +35,12 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	std::string read_name = record.Qname();
 
 	// Add bins
-	for(uint32_t i = lastbin + binwidth; i < record.PositionEnd(); i = i + binwidth) {
+	std::cout << "Bin width: " << binwidth << "\n";
+	std::cout << "record.PositionEnd(): " << record.PositionEnd() << "\n";
+	std::cout << "record.Position(): " << record.Position() << "\n";
+
+	start_new_bin = lastbin == 0 ? record.Position() : lastbin + binwidth;
+	for(uint32_t i = start_new_bin; i < record.PositionEnd(); i = i + binwidth) {
 		active_bins.emplace(i, (target_counts_t){0, 0});
 	}
 
@@ -133,6 +139,7 @@ int main(int argc, char** argv) {
 
    CC::cc_walker w = CC::cc_walker(args.bam_in, args.input_file);
    w.set_binwidth(50); // TODO: allow this to be specifiable
+
    if(!w.set_output_file(args.output_file)) exit(1);
 
    w.walk_all();
