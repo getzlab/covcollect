@@ -49,7 +49,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 //			std::cout << bin.first << ", ";
 			active_bins.erase(bin.first);
 		} else if (bin.first < record.Position()) {
-			binmin = bin.first
+			binmin = bin.first;
 		}
 	}
 
