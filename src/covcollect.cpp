@@ -39,7 +39,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	}
 
 	for (auto const &pair: active_bins) {
-	        std::cout << "{" << pair.first << ": " << pair.second << "}\n";
+	        std::cout << pair.first << "\n";
 	    }
 
 	throw runtime_error(read_name);
