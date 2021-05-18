@@ -47,6 +47,8 @@ class cc_walker : public walker::walker {
    uint16_t curchr = 0;
 
    uint32_t binwidth = 0;
+   uint64_t binmin = 0;
+   uint64_t binmax = 0;
    std::string curchrname = "";
 };
 

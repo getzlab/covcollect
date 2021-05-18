@@ -31,11 +31,11 @@ uint32_t cc_walker::n_overlap(const SeqLib::GenomicRegion& region, uint32_t star
 
 
 bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
-	std::cout << "Next read\n";
+	std::cout << "Next read start pos:" << record.Position() << "\n";
 	std::string read_name = record.Qname();
 
 	// Write and delete
-	std::cout << "\nwrite and delete: ";
+//	std::cout << "\nwrite and delete: ";
 	for (std::pair<uint64_t, target_counts_t> bin : active_bins) {
 		if (bin.first + binwidth < record.Position()) {
 			// TODO: update singletons and handle chr
@@ -45,20 +45,22 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 				bin.second.n_corrected,
 				bin.second.n_uncorrected
 			);
-			std::cout << bin.first << ", ";
+//			std::cout << bin.first << ", ";
 			active_bins.erase(bin.first);
 		}
 	}
+	binmin = bin.first + binwidth
 
 	// Add bins
-	std::cout << "\nAdd bins: ";
-	uint32_t start_new_bin = curend == 0 ? record.Position() : curend + binwidth;
+//	std::cout << "\nAdd bins: ";
+	uint32_t start_new_bin = binmax == 0 ? record.Position() : binmax + binwidth;
 	for(uint64_t i = start_new_bin; i < record.PositionEnd() + binwidth; i = i + binwidth) {
 		active_bins.emplace(i, (target_counts_t){0, 0});
-		std::cout << i << ", ";
+//		std::cout << i << ", ";
 		curend = i;
 	}
-	std::cout << "\nnew end: " << curend << "\n";
+	std::cout << "new min: " << binmin << "\n";
+	std::cout << "\nnew max: " << binmax << "\n";
 
 	std::cout << "active_bins.size() is " << active_bins.size() << '\n';
 
