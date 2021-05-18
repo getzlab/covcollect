@@ -46,13 +46,13 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 				 bin->second.n_corrected,
 				 bin->second.n_uncorrected
 				);
-	      it = active_bins.erase(it);
+		 bin = active_bins.erase(bin);
 	   }
 	   else {
-		  if (bin.first <= record.Position()) {
-			  binmin = bin.first;
+		  if (bin->first <= record.Position()) {
+			  binmin = bin->first;
 		  }
-	      it++;
+		  bin++;
 	   }
 	}
 
