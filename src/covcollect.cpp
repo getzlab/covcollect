@@ -40,7 +40,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 		if (curchrname != record.ChrName() || bin.first < record.Position()) {
 			// TODO: update singletons and handle chr
 			fprintf(outfile, "%s\%d\t%d\t%d\n",
-				curchr,
+				curchrname,
 				bin.first,
 				bin.second.n_corrected,
 				bin.second.n_uncorrected
