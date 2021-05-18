@@ -41,7 +41,6 @@ class cc_walker : public walker::walker {
 
    std::unordered_map<std::string, read_boundary_t> read_cache;
    std::unordered_map<uint32_t, target_counts_t> active_bins;
-   uint32_t lastbin;
 
    uint32_t curstart = 0;
    uint32_t curend = 0;

@@ -32,17 +32,24 @@ uint32_t cc_walker::n_overlap(const SeqLib::GenomicRegion& region, uint32_t star
 
 bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	std::string read_name = record.Qname();
+	std::cout << "read_name: " << read_name << "\n";
 
 	// Write and delete
-
+	for (const auto & [ start_pos, target_coverage ] : active_bins) {
+		if (start_pos < record.Position()) {
+			// TODO: update singletons and handle chr
+			fprintf(outfile, "%d\t%d\t%d\n",
+				start_pos,
+				target_coverage.n_corrected,
+				target_coverage.n_uncorrected
+			);
+			active_bins.erase(start_pos)
+			throw runtime_error("here");
+		}
+	}
 
 	// Add bins
-	std::cout << "read_name: " << read_name << "\n";
-	std::cout << "ChrID: " << record.ChrID() << "\n";
-
-	throw runtime_error("here");
-
-	uint32_t start_new_bin = curend == 0 || curchr != record.ChrID() ? record.Position() : curend + binwidth;
+	uint32_t start_new_bin = curend == 0 ? record.Position() : curend + binwidth;
 	for(uint32_t i = start_new_bin; i < record.PositionEnd(); i = i + binwidth) {
 		active_bins.emplace(i, (target_counts_t){0, 0});
 	}
