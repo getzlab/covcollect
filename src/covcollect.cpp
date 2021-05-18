@@ -49,7 +49,6 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 				);
 		 std::cout << bin->first << ", ";
 		 bin = active_bins.erase(bin);
-		 throw runtime_error("here");
 	   }
 	   else {
 		  if (bin->first <= record.Position()) {
@@ -73,6 +72,10 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	std::cout << "new max: " << binmax << "\n";
 
 	std::cout << "active_bins.size() is " << active_bins.size() << '\n';
+
+	if (active_bins.size() > 6) {
+		throw runtime_error("here");
+	}
 
     // this is the first read in the pair; push to cache
     if(read_cache.find(read_name) == read_cache.end()) {
