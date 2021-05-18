@@ -88,6 +88,11 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 		bool overlaps = MAX(0, (int32_t) read_cache[read_name].end - (int32_t) record.Position()) > 0;
 
 		for (auto bin = active_bins.begin(); bin != active_bins.end();) {
+			uint32_t x = n_overlap(bin->first, bin->first + binwidth, read_cache[read_name].start, read_cache[read_name].end) +
+					  n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
+			std::cout << "n_overlap uncorrected: " << x << "\n";
+			std::cout << "bin->first: " << bin->first << "\n";
+			throw runtime_error();
 			bin->second.n_uncorrected += n_overlap(bin->first, bin->first + binwidth, read_cache[read_name].start, read_cache[read_name].end) +
 					  n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
 
