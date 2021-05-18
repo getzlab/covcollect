@@ -38,6 +38,12 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 		active_bins.emplace(i, (target_counts_t){0, 0})
 	}
 
+	for (auto const &pair: active_bins) {
+	        std::cout << "{" << pair.first << ": " << pair.second << "}\n";
+	    }
+
+	throw runtime_error(read_name);
+
 	// Write and delete
 
 	// Cache read pairs
