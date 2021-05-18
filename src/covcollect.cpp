@@ -46,6 +46,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 				 bin->second.n_corrected,
 				 bin->second.n_uncorrected
 				);
+		 std::cout << bin->first << ", ";
 		 bin = active_bins.erase(bin);
 	   }
 	   else {
@@ -73,11 +74,11 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 //	}
 
 	// Add bins
-//	std::cout << "\nAdd bins: ";
+	std::cout << "\nAdd bins: ";
 	uint32_t start_new_bin = binmax == 0 ? record.Position() : binmax + binwidth;
 	for(uint64_t i = start_new_bin; i < record.PositionEnd() + binwidth; i = i + binwidth) {
 		active_bins.emplace(i, (target_counts_t){0, 0});
-//		std::cout << i << ", ";
+		std::cout << i << ", ";
 		binmax = i;
 	}
 	std::cout << "new min: " << binmin << "\n";
