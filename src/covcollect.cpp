@@ -37,9 +37,10 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 
 	// Write and delete
 	for (std::pair<uint32_t, target_counts_t> bin : active_bins) {
-		if (curchr != record.ChrID() || bin.first < record.Position()) {
+		if (curchrname != record.ChrName() || bin.first < record.Position()) {
 			// TODO: update singletons and handle chr
-			fprintf(outfile, "%d\t%d\t%d\n",
+			fprintf(outfile, "%s\%d\t%d\t%d\n",
+				curchr,
 				bin.first,
 				bin.second.n_corrected,
 				bin.second.n_uncorrected
@@ -48,10 +49,10 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 			std::cout << "Erasing: " << bin.first << "\n";
 		}
 	}
-	std::cout << "Done writing\n";
-	if (curchr != record.ChrID()) {
-		std::cout << "New chrID: " << record.ChrID() << "\n";
-		curchr = record.ChrID();
+
+	if (curchrname != record.ChrName()) {
+		std::cout << record.ChrName() << "\n";
+		throw runtime_error("here");
 	}
 
 	// Add bins
