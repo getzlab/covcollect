@@ -18,7 +18,6 @@ void cc_walker::load_intervals(uint32_t pad) {
 
 void cc_walker::set_binwidth(uint32_t binwidth) {
 	this->binwidth = binwidth;
-	this->lastbin = 0;
 }
 
 void cc_walker::walk_all() {
@@ -34,23 +33,19 @@ uint32_t cc_walker::n_overlap(const SeqLib::GenomicRegion& region, uint32_t star
 bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	std::string read_name = record.Qname();
 
-	// Add bins
-	std::cout << "Bin width: " << binwidth << "\n";
-	std::cout << "record.PositionEnd(): " << record.PositionEnd() << "\n";
-	std::cout << "record.Position(): " << record.Position() << "\n";
+	// Write and delete
 
-	uint32_t start_new_bin = lastbin == 0 ? record.Position() : lastbin + binwidth;
+
+	// Add bins
+	std::cout << "read_name: " << read_name << "\n";
+	std::cout << "ChrID: " << record.ChrID() << "\n";
+
+	throw runtime_error("here");
+
+	uint32_t start_new_bin = curend == 0 || curchr != record.ChrID() ? record.Position() : curend + binwidth;
 	for(uint32_t i = start_new_bin; i < record.PositionEnd(); i = i + binwidth) {
 		active_bins.emplace(i, (target_counts_t){0, 0});
 	}
-
-	for (auto const &pair: active_bins) {
-	        std::cout << pair.first << "\n";
-	    }
-
-	throw runtime_error(read_name);
-
-	// Write and delete
 
 	// Cache read pairs
 
