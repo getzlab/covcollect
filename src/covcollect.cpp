@@ -31,7 +31,7 @@ uint32_t cc_walker::n_overlap(const SeqLib::GenomicRegion& region, uint32_t star
 
 
 bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
-	std::cout << "Next read start pos:" << record.Position() << "\n";
+	std::cout << "\nNext read start pos:" << record.Position() << "\n";
 	std::string read_name = record.Qname();
 
 	// Write and delete
@@ -48,7 +48,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 			);
 //			std::cout << bin.first << ", ";
 			active_bins.erase(bin.first);
-		} else if (bin.first < record.Position()) {
+		} else if (bin.first <= record.Position()) {
 			binmin = bin.first;
 		}
 	}
@@ -59,10 +59,10 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	for(uint64_t i = start_new_bin; i < record.PositionEnd() + binwidth; i = i + binwidth) {
 		active_bins.emplace(i, (target_counts_t){0, 0});
 //		std::cout << i << ", ";
-		curend = i;
+		binmax = i;
 	}
 	std::cout << "new min: " << binmin << "\n";
-	std::cout << "\nnew max: " << binmax << "\n";
+	std::cout << "new max: " << binmax << "\n";
 
 	std::cout << "active_bins.size() is " << active_bins.size() << '\n';
 
