@@ -39,12 +39,12 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	uint64_t binmintrack = record.Position();
 
 	for (auto bin = active_bins.begin(); bin != active_bins.end();) {
-	   if(bin.first + binwidth < record.Position()) {
+	   if(bin->first + binwidth < record.Position()) {
 		 fprintf(outfile, "%s\t%lu\t%d\t%d\n",
 				 curchrname.c_str(),
-				 bin.first,
-				 bin.second.n_corrected,
-				 bin.second.n_uncorrected
+				 bin->first,
+				 bin->second.n_corrected,
+				 bin->second.n_uncorrected
 				);
 	      it = active_bins.erase(it);
 	   }
