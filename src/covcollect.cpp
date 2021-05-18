@@ -50,8 +50,8 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 		}
 	}
 
-	if (curchrname != record.ChrName()) {
-		std::cout << record.ChrName() << "\n";
+	if (curchrname != record.ChrName() & curchrname != "") {
+		std::cout << "new chr: " << record.ChrName() << "\n";
 		throw runtime_error("here");
 	}
 
