@@ -17,14 +17,23 @@ void cc_walker::load_intervals(uint32_t pad) {
 }
 
 void cc_walker::walk_all() {
-   cur_region = intervals[0];
-   walker::walk(intervals);
+//   cur_region = intervals[0];
+//   walker::walk(intervals);
+   walker::walk();
 }
 
 uint32_t cc_walker::n_overlap(const SeqLib::GenomicRegion& region, uint32_t start, uint32_t end) {
    if(start > region.pos2 - this->pad || region.pos1 + this->pad > end) return 0;
    return MIN(region.pos2 - this->pad, end) - MAX(start, region.pos1 + this->pad);
 }
+
+
+bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
+	std::string read_name = record.Qname();
+
+	throw runtime_error(throw runtime_error(s));
+}
+
 
 bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
    std::string read_name = record.Qname();
