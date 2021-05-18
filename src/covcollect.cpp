@@ -43,9 +43,12 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 				bin.second.n_corrected,
 				bin.second.n_uncorrected
 			);
+			for (const auto &element : active_bins) {
+			    std::cout << element.first << ": " << element.second << "\n";
+			}
 			active_bins.erase(bin.first);
+			throw runtime_error("here");
 		}
-		throw runtime_error("here");
 	}
 
 	// Add bins
