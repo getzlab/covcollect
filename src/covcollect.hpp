@@ -25,6 +25,7 @@ class cc_walker : public walker::walker {
    public:
    bool walk_apply(const SeqLib::BamRecord& record);
    void load_intervals(uint32_t pad);
+   void set_binwidth(uint32_t binwidth);
    void walk_all();
    uint32_t n_overlap(const SeqLib::GenomicRegion& region, uint32_t start, uint32_t end);
 
@@ -40,6 +41,7 @@ class cc_walker : public walker::walker {
 
    std::unordered_map<std::string, read_boundary_t> read_cache;
    std::unordered_map<uint32_t, target_counts_t> active_bins;
+   uint32_t lastbin;
 
    uint32_t curstart = 0;
    uint32_t curend = 0;
