@@ -36,7 +36,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 
 	// Write and delete
 	std::cout << "\nwrite and delete: ";
-	for (std::pair<uint32_t, target_counts_t> bin : active_bins) {
+	for (std::pair<uint64_t, target_counts_t> bin : active_bins) {
 		if (bin.first + binwidth < record.Position()) {
 			// TODO: update singletons and handle chr
 			fprintf(outfile, "%s\%d\t%d\t%d\n",
@@ -53,7 +53,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	// Add bins
 	std::cout << "\nAdd bins: ";
 	uint32_t start_new_bin = curend == 0 ? record.Position() : curend + binwidth;
-	for(uint32_t i = start_new_bin; i < record.PositionEnd() + binwidth; i = i + binwidth) {
+	for(uint64_t i = start_new_bin; i < record.PositionEnd() + binwidth; i = i + binwidth) {
 		active_bins.emplace(i, (target_counts_t){0, 0});
 		std::cout << i << ", ";
 		curend = i;
