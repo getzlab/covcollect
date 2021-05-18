@@ -43,11 +43,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 				bin.second.n_corrected,
 				bin.second.n_uncorrected
 			);
-			for (const auto &element : active_bins) {
-			    std::cout << element.first << "\n";
-			}
 			active_bins.erase(bin.first);
-			throw runtime_error("here");
 		}
 	}
 
@@ -55,6 +51,10 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	uint32_t start_new_bin = curend == 0 ? record.Position() : curend + binwidth;
 	for(uint32_t i = start_new_bin; i < record.PositionEnd(); i = i + binwidth) {
 		active_bins.emplace(i, (target_counts_t){0, 0});
+	}
+
+	for (const auto &element : active_bins) {
+	    std::cout << element.first << "\n";
 	}
 
 	return 1;
