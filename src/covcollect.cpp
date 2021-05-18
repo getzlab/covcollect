@@ -43,7 +43,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 				target_coverage.n_corrected,
 				target_coverage.n_uncorrected
 			);
-			active_bins.erase(start_pos)
+			active_bins.erase(start_pos);
 			throw runtime_error("here");
 		}
 	}
