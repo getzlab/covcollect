@@ -31,6 +31,7 @@ uint32_t cc_walker::n_overlap(const SeqLib::GenomicRegion& region, uint32_t star
 
 
 bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
+	std::cout << "Next read\n";
 	std::string read_name = record.Qname();
 
 	// Write and delete
