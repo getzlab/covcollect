@@ -39,7 +39,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	for (std::pair<uint64_t, target_counts_t> bin : active_bins) {
 		if (bin.first + binwidth < record.Position()) {
 			// TODO: update singletons and handle chr
-			fprintf(outfile, "%s\%d\t%d\t%d\n",
+			fprintf(outfile, "%s\%lu\t%d\t%d\n",
 				curchrname.c_str(),
 				bin.first,
 				bin.second.n_corrected,
