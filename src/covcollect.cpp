@@ -57,11 +57,10 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	   }
 	}
 
-	for(auto read = read_cache.begin(); read != read_cache.end();) {
+	for(auto read = read_cache.begin(); read != read_cache.end(); read++) {
 		if (read->second.end < binmin) {
 			read_cache.erase(read);
 		}
-		read++;
 	}
 
 	// TODO: check if missing regions
@@ -89,7 +88,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 		 }
 	   );
 
-	   for (auto bin = active_bins.begin(); bin != active_bins.end();) {
+	   for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
 		   bin->second.n_corrected += n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
 	   }
 
@@ -102,11 +101,10 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 		std::cout << "record.Position(): " << record.Position() << "\n";
 		std::cout << "record.PositionEnd(): " << record.PositionEnd() << "\n";
 		std::cout << "Looping through bins\n";
-		for (auto bin = active_bins.begin(); bin != active_bins.end();) {
+		for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
 			std::cout << "bin->first: " << bin->first << "\n";
 			bin->second.n_uncorrected += n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
 			bin->second.n_corrected += n_overlap(bin->first, bin->first + binwidth, ovlpstart, record.PositionEnd());
-			bin++;
 		}
 
 		// remove from cache
