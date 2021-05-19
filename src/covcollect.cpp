@@ -36,19 +36,18 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 
 	// Write and delete
 	std::cout << "\nwrite and delete: ";
-	uint64_t binmintrack = record.Position();
 
 	for (auto bin = active_bins.begin(); bin != active_bins.end();) {
 	   if(bin->first + binwidth < record.Position()) {
-		 fprintf(outfile, "%s\t%lu\t%lu\t%d\t%d\n",
+		   fprintf(outfile, "%s\t%lu\t%lu\t%d\t%d\n",
 				 curchrname.c_str(),
 				 bin->first,
 				 bin->first + binwidth - 1,
 				 bin->second.n_corrected,
 				 bin->second.n_uncorrected
 				);
-		 std::cout << bin->first << ", ";
-		 bin = active_bins.erase(bin);
+		   std::cout << bin->first << ", ";
+		   bin = active_bins.erase(bin);
 	   }
 	   else {
 		  if (bin->first <= record.Position()) {
@@ -56,6 +55,12 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 		  }
 		  bin++;
 	   }
+	}
+
+	for(const auto& read : read_cache) {
+		if (read.second.end < binmin) {
+			read_cache.erase(read);
+		}
 	}
 
 	// TODO: check if missing regions
@@ -82,10 +87,14 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	   (uint32_t) record.PositionEnd()
 		 }
 	   );
+
+	   for (auto bin = active_bins.begin(); bin != active_bins.end();) {
+		   bin->second.n_corrected += n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
+	   }
+
     } else {
     	std::cout << "Pair!\n";
-
-		bool overlaps = MAX(0, (int32_t) read_cache[read_name].end - (int32_t) record.Position()) > 0;
+		unint64 ovlpstart = MAX((int32_t) read_cache[read_name].end, nt32_t) record.Position());
 
 		std::cout << "read_cache[read_name].start: " << read_cache[read_name].start << "\n";
 		std::cout << "read_cache[read_name].end: " << read_cache[read_name].end << "\n";
@@ -93,20 +102,9 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 		std::cout << "record.PositionEnd(): " << record.PositionEnd() << "\n";
 		std::cout << "Looping through bins\n";
 		for (auto bin = active_bins.begin(); bin != active_bins.end();) {
-			uint32_t x = n_overlap(bin->first, bin->first + binwidth, read_cache[read_name].start, read_cache[read_name].end) +
-					  n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
-			std::cout << "n_overlap uncorrected: " << x << "\n";
 			std::cout << "bin->first: " << bin->first << "\n";
-			bin->second.n_uncorrected += n_overlap(bin->first, bin->first + binwidth, read_cache[read_name].start, read_cache[read_name].end) +
-					  n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
-
-			if (overlaps) {
-				std::cout << "Overlaps\n";
-				bin->second.n_corrected += n_overlap(bin->first, bin->first + binwidth, read_cache[read_name].start, record.PositionEnd());
-			} else {
-				std::cout << "no Overlaps\n";
-				bin->second.n_corrected = bin->second.n_uncorrected;
-			}
+			bin->second.n_uncorrected += n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
+			bin->second.n_corrected += n_overlap(bin->first, bin->first + binwidth, ovlpstart, record.PositionEnd());
 			bin++;
 		}
 
