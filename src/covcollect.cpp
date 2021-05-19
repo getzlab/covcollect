@@ -57,10 +57,11 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	   }
 	}
 
-	for(const auto& read : read_cache) {
+	for(const auto read = read_cache.begin(); read != read_cache.end();) {
 		if (read.second.end < binmin) {
 			read_cache.erase(read);
 		}
+		read++;
 	}
 
 	// TODO: check if missing regions
@@ -94,7 +95,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 
     } else {
     	std::cout << "Pair!\n";
-		unint64 ovlpstart = MAX((int32_t) read_cache[read_name].end, nt32_t) record.Position());
+    	uint32_t ovlpstart = MAX((int32_t) read_cache[read_name].end, (int32_t) record.Position());
 
 		std::cout << "read_cache[read_name].start: " << read_cache[read_name].start << "\n";
 		std::cout << "read_cache[read_name].end: " << read_cache[read_name].end << "\n";
