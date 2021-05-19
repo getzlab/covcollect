@@ -92,6 +92,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 
 	   for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
 		   bin->second.n_corrected += n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
+		   bin->second.n_uncorrected += n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
 	   }
 
     } else {
