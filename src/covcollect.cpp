@@ -57,7 +57,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	   }
 	}
 
-	for(auto read = read_cache.begin(); read != read_cache.end()) {
+	for(auto read = read_cache.begin(); read != read_cache.end();) {
 		if (read->second.end < binmin) {
 			read = read_cache.erase(read);
 		} else {
