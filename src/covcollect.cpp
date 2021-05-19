@@ -31,13 +31,10 @@ uint32_t cc_walker::n_overlap(const uint32_t binstart, uint32_t binend, uint32_t
 
 
 bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
-	std::cout << "\nNext read start pos:" << record.Position() << "\n";
-	std::string read_name = record.Qname();
-
-	// Write and delete
-	std::cout << "\nwrite and delete: ";
 
 	for (auto bin = active_bins.begin(); bin != active_bins.end();) {
+		// TODO: check chromosome changed
+		// TODO: print in order (binmin?
 	   if(bin->first + binwidth < record.Position()) {
 		   fprintf(outfile, "%s\t%lu\t%lu\t%d\t%d\n",
 				 curchrname.c_str(),
@@ -57,6 +54,10 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	   }
 	}
 
+	// TODO: print missing bins
+
+	// TODO: Clear if move to new chromosome
+
 	for(auto read = read_cache.begin(); read != read_cache.end();) {
 		if (read->second.end < binmin) {
 			read = read_cache.erase(read);
@@ -65,20 +66,12 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 		}
 	}
 
-	// TODO: check if missing regions
-
 	// Add bins
-	std::cout << "\nAdd bins: ";
 	uint32_t start_new_bin = binmax == 0 ? record.Position() : binmax + binwidth;
 	for(uint64_t i = start_new_bin; i < record.PositionEnd() + binwidth; i = i + binwidth) {
 		active_bins.emplace(i, (target_counts_t){0, 0});
-		std::cout << i << ", ";
 		binmax = i;
 	}
-	std::cout << "new min: " << binmin << "\n";
-	std::cout << "new max: " << binmax << "\n";
-
-	std::cout << "active_bins.size() is " << active_bins.size() << '\n';
 
     // this is the first read in the pair; push to cache
     if(read_cache.find(read_name) == read_cache.end()) {
@@ -96,16 +89,9 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	   }
 
     } else {
-    	std::cout << "Pair!\n";
     	uint32_t ovlpstart = MAX((int32_t) read_cache[read_name].end, (int32_t) record.Position());
 
-		std::cout << "read_cache[read_name].start: " << read_cache[read_name].start << "\n";
-		std::cout << "read_cache[read_name].end: " << read_cache[read_name].end << "\n";
-		std::cout << "record.Position(): " << record.Position() << "\n";
-		std::cout << "record.PositionEnd(): " << record.PositionEnd() << "\n";
-		std::cout << "Looping through bins\n";
 		for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
-			std::cout << "bin->first: " << bin->first << "\n";
 			bin->second.n_uncorrected += n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
 			bin->second.n_corrected += n_overlap(bin->first, bin->first + binwidth, ovlpstart, record.PositionEnd());
 		}
