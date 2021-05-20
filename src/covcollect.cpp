@@ -47,7 +47,6 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 				 bin->second.n_corrected,
 				 bin->second.n_uncorrected
 				);
-		   std::cout << bin->first << ", ";
 		   bin = active_bins.erase(bin);
 	   }
 	   else {
@@ -59,9 +58,9 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 //		std::cout << bin->first << "\t" << bin->second.n_uncorrected << "\n";
 	}
 
-	if (active_bins.size() > 10) {
-		throw runtime_error("here");
-	}
+//	if (active_bins.size() > 10) {
+//		throw runtime_error("here");
+//	}
 
 	// TODO: print missing bins
 
