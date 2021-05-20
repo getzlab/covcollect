@@ -33,13 +33,6 @@ uint32_t cc_walker::n_overlap(const uint32_t binstart, uint32_t binend, uint32_t
 bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	std::string read_name = record.Qname();
 
-	if(n_reads_proc > 0) fprintf(stderr,
-	     "%s:%d size of active_bins = %lu\n",
-	     header.IDtoName(cur_read.ChrID()).c_str(),
-	     cur_read.Position(),
-		 active_bins.size()
-	   );
-
 	int32_t record_chr = record.ChrID();
 
 	std::map<uint64_t, target_counts_t> ordered_active_bins(active_bins.begin(), active_bins.end());
