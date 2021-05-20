@@ -32,16 +32,15 @@ uint32_t cc_walker::n_overlap(const uint32_t binstart, uint32_t binend, uint32_t
 
 bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	std::string read_name = record.Qname();
-	std::cout << "Record chromosome: " << record.ChrID() << "\n";
+
 	int32_t record_chr = record.ChrID();
 
 	std::map<uint64_t, target_counts_t> ordered_active_bins(active_bins.begin(), active_bins.end());
 	for (auto bin = ordered_active_bins.begin(); bin != ordered_active_bins.end(); ++bin) {
 		// TODO: check chromosome changed
-		// TODO: print in order (binmin?
-	   if(bin->first + binwidth < record.Position()) {
-		   fprintf(outfile, "%s\t%lu\t%lu\t%d\t%d\n",
-				 curchrname.c_str(),
+	   if(record_chr != curchr || bin->first + binwidth < record.Position()) {
+		   fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n",
+				 curchr + 1,
 				 bin->first,
 				 bin->first + binwidth - 1,
 				 bin->second.n_corrected,
@@ -51,7 +50,6 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	   }
 	   else if (bin->first <= record.Position()) {
 		  binmin = bin->first;
-
 	   }
 	}
 
@@ -60,11 +58,16 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	// TODO: Clear if move to new chromosome
 
 	for(auto read = read_cache.begin(); read != read_cache.end();) {
-		if (read->second.end < binmin) {
+		if (record_chr != curchr || read->second.end < binmin) {
 			read = read_cache.erase(read);
 		} else {
 			read++;
 		}
+	}
+
+	if (record_chr != curchr) {
+		curchr = record_chr;
+		binmin = 0;
 	}
 
 	// Add bins

@@ -44,7 +44,7 @@ class cc_walker : public walker::walker {
 
    uint32_t curstart = 0;
    uint32_t curend = 0;
-   uint16_t curchr = 0;
+   int32_t curchr = 0;
 
    uint32_t binwidth = 0;
    uint64_t binmin = 0;
