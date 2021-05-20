@@ -55,7 +55,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 //		  }
 //		  bin++;
 //	   }
-		std::cout << bin->first << "\t" << bin->second << "\n";
+		std::cout << bin->first << "\t" << bin->second.uncorrected << "\n";
 	}
 
 	if (active_bins.size() > 4) {
