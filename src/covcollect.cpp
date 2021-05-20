@@ -52,7 +52,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	   }
 	}
 
-	// TODO: print missing bins
+	// TODO: print missing bins. Assign binmax
 
 	for (uint64_t i = binmax; i < record.Position() + binwidth; i = i + binwidth) {
 		fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n",
@@ -62,7 +62,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 						 0,
 						 0
 						);
-		binmax++;
+		binmax = i;
 	}
 
 	for(auto read = read_cache.begin(); read != read_cache.end();) {
