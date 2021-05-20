@@ -59,7 +59,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 		bin++;
 	}
 
-	if (active_bins.size() > 0) {
+	if (active_bins.size() > 4) {
 		throw runtime_error("here");
 	}
 
