@@ -55,7 +55,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 //		  }
 //		  bin++;
 //	   }
-		std::cout << bin->first;
+		std::cout << bin->first << "\n";
 		bin++;
 	}
 
