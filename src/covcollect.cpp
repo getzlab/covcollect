@@ -35,8 +35,8 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	std::cout << "Record chromosome: " << record.ChrID() << "\n";
 	int32_t record_chr = record.ChrID();
 
-	std::map<uint64_t, target_counts_t> ordered_active_bins(active_bins.begin(), active_bins.end());
-	for (auto bin = ordered_active_bins.begin(); bin != ordered_active_bins.end(); ++bin) {
+	std::map<uint64_t, target_counts_t> active_bins(active_bins.begin(), active_bins.end());
+	for (auto bin = active_bins.begin(); bin != active_bins.end();) {
 		// TODO: check chromosome changed
 	   if(bin->first + binwidth < record.Position()) {
 		   fprintf(outfile, "%s\t%lu\t%lu\t%d\t%d\n",
