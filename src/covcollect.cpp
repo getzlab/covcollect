@@ -34,7 +34,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	std::string read_name = record.Qname();
 
 	if(n_reads_proc > 0) fprintf(stderr,
-	     "%s:%d size of active_bins = %d\n",
+	     "%s:%d size of active_bins = %lu\n",
 	     header.IDtoName(cur_read.ChrID()).c_str(),
 	     cur_read.Position(),
 		 active_bins.size()
