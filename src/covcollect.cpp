@@ -31,6 +31,7 @@ uint32_t cc_walker::n_overlap(const uint32_t binstart, uint32_t binend, uint32_t
 
 
 bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
+	std::string read_name = record.Qname();
 	std::cout << "Record chromosome: " << record.ChrID() << "\n";
 	int32_t record_chr = record.ChrID();
 
