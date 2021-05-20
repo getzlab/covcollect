@@ -37,7 +37,6 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 
 	std::map<uint64_t, target_counts_t> ordered_active_bins(active_bins.begin(), active_bins.end());
 	for (auto bin = ordered_active_bins.begin(); bin != ordered_active_bins.end(); ++bin) {
-		// TODO: check chromosome changed
 	   if(record_chr != curchr || bin->first + binwidth < record.Position()) {
 		   fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n",
 				 curchr + 1,
@@ -55,7 +54,15 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 
 	// TODO: print missing bins
 
-	// TODO: Clear if move to new chromosome
+	for (uint64_t i = binmax; i < record.Position() + binwidth; i = i + binwidth) {
+		fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n",
+						 curchr + 1,
+						 i,
+						 i + binwidth - 1,
+						 0,
+						 0
+						);
+	}
 
 	for(auto read = read_cache.begin(); read != read_cache.end();) {
 		if (record_chr != curchr || read->second.end < binmin) {
