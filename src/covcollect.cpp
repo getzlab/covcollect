@@ -31,27 +31,35 @@ uint32_t cc_walker::n_overlap(const uint32_t binstart, uint32_t binend, uint32_t
 
 
 bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
+	std::cout << "Record chromosome: " << record.ChrID() << "\n";
+	int32_t record_chr = record.ChrID();
 
 	for (auto bin = active_bins.begin(); bin != active_bins.end();) {
 		// TODO: check chromosome changed
 		// TODO: print in order (binmin?
-	   if(bin->first + binwidth < record.Position()) {
-		   fprintf(outfile, "%s\t%lu\t%lu\t%d\t%d\n",
-				 curchrname.c_str(),
-				 bin->first,
-				 bin->first + binwidth - 1,
-				 bin->second.n_corrected,
-				 bin->second.n_uncorrected
-				);
-		   std::cout << bin->first << ", ";
-		   bin = active_bins.erase(bin);
-	   }
-	   else {
-		  if (bin->first <= record.Position()) {
-			  binmin = bin->first;
-		  }
-		  bin++;
-	   }
+//	   if(bin->first + binwidth < record.Position()) {
+//		   fprintf(outfile, "%s\t%lu\t%lu\t%d\t%d\n",
+//				 curchrname.c_str(),
+//				 bin->first,
+//				 bin->first + binwidth - 1,
+//				 bin->second.n_corrected,
+//				 bin->second.n_uncorrected
+//				);
+//		   std::cout << bin->first << ", ";
+//		   bin = active_bins.erase(bin);
+//	   }
+//	   else {
+//		  if (bin->first <= record.Position()) {
+//			  binmin = bin->first;
+//		  }
+//		  bin++;
+//	   }
+		std::cout << bin->first;
+		bin++;
+	}
+
+	if (active_bins.size() > 0) {
+		throw runtime_error("here");
 	}
 
 	// TODO: print missing bins
