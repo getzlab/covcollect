@@ -79,7 +79,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	}
 
 	// Add bins
-	for(uint64_t i = binmax; i < record.PositionEnd() + binwidth; i = i + binwidth) {
+	for(uint64_t i = binmax + binwidth; i < record.PositionEnd() + binwidth; i = i + binwidth) {
 		active_bins.emplace(i, (target_counts_t){0, 0});
 		binmax = i;
 	}
