@@ -90,8 +90,9 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 						 0,
 						 0
 						);
+		binmax = i;
 	}
-	binmax = record.Position() + (record.Position() % binwidth);
+	binmax += binwidth;
 
 	// Add bins
 	for(uint64_t i = binmax; i < record.PositionEnd() + binwidth; i = i + binwidth) {
@@ -99,7 +100,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 		binmax = i;
 	}
 
-	binmax = record.PositionEnd() + binwidth + (record.PositionEnd() % binwidth);
+	binmax += binwidth;
 
     // this is the first read in the pair; push to cache
     if(read_cache.find(read_name) == read_cache.end()) {
