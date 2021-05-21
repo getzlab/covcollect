@@ -88,21 +88,18 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 		fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\tfiller\n",
 						 curchr + 1,
 						 i,
-						 i + binwidth - 1,
+						 i + binwidth,
 						 0,
 						 0
 						);
-		binmax = i;
+		binmax = i + binwidth;
 	}
-	binmax += binwidth;
 
 	// Add bins
 	for(uint64_t i = binmax; i < record.PositionEnd() + binwidth; i = i + binwidth) {
 		active_bins.emplace(i, (target_counts_t){0, 0});
-		binmax = i;
+		binmax = i + binwidth;
 	}
-
-	binmax += binwidth;
 
     // this is the first read in the pair; push to cache
     if(read_cache.find(read_name) == read_cache.end()) {
