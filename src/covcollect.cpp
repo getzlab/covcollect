@@ -40,7 +40,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord &record) {
 				active_bins.begin(), active_bins.end());
 		for (auto bin = ordered_active_bins.begin();
 				bin != ordered_active_bins.end(); ++bin) {
-			fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n", curchr + 1, bin->first,
+			fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n", header.IDtoName(curchr).c_str(), bin->first,
 					bin->first + binwidth - 1, bin->second.n_corrected,
 					bin->second.n_uncorrected);
 		}
@@ -56,7 +56,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord &record) {
 				bin->first + binwidth < record.Position()
 						&& bin != ordered_active_bins.end(); ++bin) {
 
-			fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n", curchr + 1, bin->first,
+			fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n", header.IDtoName(curchr).c_str(), bin->first,
 					bin->first + binwidth, bin->second.n_corrected,
 					bin->second.n_uncorrected);
 			active_bins.erase(bin->first);
@@ -76,7 +76,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord &record) {
 	// Print gaps
 	for (uint64_t i = binmax; i + binwidth < record.Position();
 			i = i + binwidth) {
-		fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n", curchr + 1, i, i + binwidth,
+		fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n", header.IDtoName(curchr).c_str(), i, i + binwidth,
 				0, 0);
 	}
 	binmax = (record.Position() / binwidth) * binwidth;
