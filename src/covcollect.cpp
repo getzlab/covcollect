@@ -39,7 +39,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	}
 
 	std::map<uint64_t, target_counts_t> ordered_active_bins(active_bins.begin(), active_bins.end());
-	for (auto bin = ordered_active_bins.begin(); bin->first + binwidth > record.Position(); ++bin) {
+	for (auto bin = ordered_active_bins.begin(); bin != ordered_active_bins.end(); ++bin) {
 	   if(record_chr != curchr || bin->first + binwidth < record.Position()) {
 		   fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n",
 				 curchr + 1,
