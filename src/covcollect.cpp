@@ -92,7 +92,6 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 						);
 		binmax = i;
 	}
-	binmax += binwidth;
 
 	// Add bins
 	for(uint64_t i = binmax; i < record.PositionEnd() + binwidth; i = i + binwidth) {
