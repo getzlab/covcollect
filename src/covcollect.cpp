@@ -30,25 +30,23 @@ uint32_t cc_walker::n_overlap(const uint32_t binstart, uint32_t binend, uint32_t
 }
 
 
-bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
+bool cc_walker::walk_apply(const SeqLib::BamRecord &record) {
 	std::string read_name = record.Qname();
 	int32_t record_chr = record.ChrID();
 
-	if(!(n_reads % 10000)) {
+	if (!(n_reads % 10000)) {
 		std::cout << "active_bins.size()= " << active_bins.size() << "\n";
 	}
 
 	if (record_chr != curchr) {
 		// print and erase everything
-		std::map<uint64_t, target_counts_t> ordered_active_bins(active_bins.begin(), active_bins.end());
-		for (auto bin = ordered_active_bins.begin(); bin != ordered_active_bins.end(); ++bin) {
-			   fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n",
-					 curchr + 1,
-					 bin->first,
-					 bin->first + binwidth - 1,
-					 bin->second.n_corrected,
-					 bin->second.n_uncorrected
-					);
+		std::map<uint64_t, target_counts_t> ordered_active_bins(
+				active_bins.begin(), active_bins.end());
+		for (auto bin = ordered_active_bins.begin();
+				bin != ordered_active_bins.end(); ++bin) {
+			fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n", curchr + 1, bin->first,
+					bin->first + binwidth - 1, bin->second.n_corrected,
+					bin->second.n_uncorrected);
 		}
 		active_bins.clear();
 		read_cache.clear();
@@ -56,22 +54,21 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 		binmin = 0;
 		binmax = 0;
 	} else {
-		std::map<uint64_t, target_counts_t> ordered_active_bins(active_bins.begin(), active_bins.end());
-		for (auto bin = ordered_active_bins.begin(); bin->first + binwidth < record.Position() && bin != ordered_active_bins.end(); ++bin) {
+		std::map<uint64_t, target_counts_t> ordered_active_bins(
+				active_bins.begin(), active_bins.end());
+		for (auto bin = ordered_active_bins.begin();
+				bin->first + binwidth < record.Position()
+						&& bin != ordered_active_bins.end(); ++bin) {
 
-		   fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n",
-				 curchr + 1,
-				 bin->first,
-				 bin->first + binwidth,
-				 bin->second.n_corrected,
-				 bin->second.n_uncorrected
-				);
-		   active_bins.erase(bin->first);
+			fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n", curchr + 1, bin->first,
+					bin->first + binwidth, bin->second.n_corrected,
+					bin->second.n_uncorrected);
+			active_bins.erase(bin->first);
 		}
 
 		binmin = record.Position() - (record.Position() % binwidth);
 
-		for(auto read = read_cache.begin(); read != read_cache.end();) {
+		for (auto read = read_cache.begin(); read != read_cache.end();) {
 			if (read->second.end < binmin) {
 				read = read_cache.erase(read);
 			} else {
@@ -80,52 +77,51 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 		}
 	}
 
-	for (uint64_t i = binmax; i + binwidth < record.Position(); i = i + binwidth) {
-		fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n",
-						 curchr + 1,
-						 i,
-						 i + binwidth,
-						 0,
-						 0
-						);
+	// Print gaps
+	for (uint64_t i = binmax; i + binwidth < record.Position();
+			i = i + binwidth) {
+		fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n", curchr + 1, i, i + binwidth,
+				0, 0);
 	}
 	binmax = (record.Position() / binwidth) * binwidth;
 
 	// Add bins
-	for(uint64_t i = binmax; i < record.PositionEnd() + binwidth; i = i + binwidth) {
-		if (active_bins.find(i)) {
-			throw runtime_error(i);
-		}
-		active_bins.emplace(i, (target_counts_t){0, 0});
+	for (uint64_t i = binmax; i < record.PositionEnd() + binwidth;
+			i = i + binwidth) {
+		active_bins.emplace(i, (target_counts_t ) { 0, 0 });
 	}
 	binmax = ((record.PositionEnd() / binwidth) + 2) * binwidth;
 
-    // this is the first read in the pair; push to cache
-    if(read_cache.find(read_name) == read_cache.end()) {
-	   read_cache.emplace(
-		 read_name,
-		 (read_boundary_t) {
-	   (uint32_t) record.Position(),
-	   (uint32_t) record.PositionEnd()
-		 }
-	   );
-
-	   for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
-		   bin->second.n_corrected += n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
-		   bin->second.n_uncorrected += n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
-	   }
-
-    } else {
-    	uint32_t ovlpstart = MAX((int32_t) read_cache[read_name].end, (int32_t) record.Position());
+	// this is the first read in the pair; push to cache
+	if (read_cache.find(read_name) == read_cache.end()) {
+		read_cache.emplace(read_name,
+				(read_boundary_t ) { (uint32_t) record.Position(),
+								(uint32_t) record.PositionEnd() });
 
 		for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
-			bin->second.n_uncorrected += n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
-			bin->second.n_corrected += n_overlap(bin->first, bin->first + binwidth, ovlpstart, record.PositionEnd());
+			bin->second.n_corrected += n_overlap(bin->first,
+					bin->first + binwidth, record.Position(),
+					record.PositionEnd());
+			bin->second.n_uncorrected += n_overlap(bin->first,
+					bin->first + binwidth, record.Position(),
+					record.PositionEnd());
+		}
+
+	} else {
+		uint32_t ovlpstart = MAX((int32_t ) read_cache[read_name].end,
+				(int32_t ) record.Position());
+
+		for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
+			bin->second.n_uncorrected += n_overlap(bin->first,
+					bin->first + binwidth, record.Position(),
+					record.PositionEnd());
+			bin->second.n_corrected += n_overlap(bin->first,
+					bin->first + binwidth, ovlpstart, record.PositionEnd());
 		}
 
 		// remove from cache
 		read_cache.erase(read_name);
-    }
+	}
 
 	return 1;
 
