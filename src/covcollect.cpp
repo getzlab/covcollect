@@ -79,6 +79,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	if (record_chr != curchr) {
 		curchr = record_chr;
 		binmin = 0;
+		binmax = 0;
 	}
 
 	// Add bins
