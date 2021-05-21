@@ -64,7 +64,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 		   fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n",
 				 curchr + 1,
 				 bin->first,
-				 bin->first + binwidth - 1,
+				 bin->first + binwidth,
 				 bin->second.n_corrected,
 				 bin->second.n_uncorrected
 				);
@@ -92,8 +92,9 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 						 0,
 						 0
 						);
-		binmax = i + binwidth;
+//		binmax = i + binwidth;
 	}
+	binmax = (record.Position() / binwidth) * binwidth;
 
 	// Add bins
 	for(uint64_t i = binmax; i < record.PositionEnd() + binwidth; i = i + binwidth) {
