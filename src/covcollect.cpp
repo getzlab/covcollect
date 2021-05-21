@@ -38,9 +38,27 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 		std::cout << "active_bins.size()= " << active_bins.size() << "\n";
 	}
 
-	std::map<uint64_t, target_counts_t> ordered_active_bins(active_bins.begin(), active_bins.end());
-	for (auto bin = ordered_active_bins.begin(); bin != ordered_active_bins.end(); ++bin) {
-	   if(record_chr != curchr || bin->first + binwidth < record.Position()) {
+	if (record_chr != curchr) {
+		// print and erase everything
+		std::map<uint64_t, target_counts_t> ordered_active_bins(active_bins.begin(), active_bins.end());
+		for (auto bin = ordered_active_bins.begin(); bin != ordered_active_bins.end(); ++bin) {
+			   fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n",
+					 curchr + 1,
+					 bin->first,
+					 bin->first + binwidth - 1,
+					 bin->second.n_corrected,
+					 bin->second.n_uncorrected
+					);
+		}
+		active_bins.clear();
+		read_cache.clear();
+		curchr = record_chr;
+		binmin = 0;
+		binmax = 0;
+	} else {
+		std::map<uint64_t, target_counts_t> ordered_active_bins(active_bins.begin(), active_bins.end());
+		for (auto bin = ordered_active_bins.begin(); bin->first + binwidth < record.Position() || bin != ordered_active_bins.end(); ++bin) {
+
 		   fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n",
 				 curchr + 1,
 				 bin->first,
@@ -49,15 +67,22 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 				 bin->second.n_uncorrected
 				);
 		   active_bins.erase(bin->first);
-	   }
-	   else if (bin->first <= record.Position()) {
-		  binmin = bin->first;
-	   }
+		}
+
+		binmin = record.Position() - (record.Position() % binwidth)
+
+		for(auto read = read_cache.begin(); read != read_cache.end();) {
+			if (read->second.end < binmin) {
+				read = read_cache.erase(read);
+			} else {
+				read++;
+			}
+		}
 	}
 
 	// TODO: print missing bins. Assign binmax
 
-	for (uint64_t i = binmax + binwidth; i < record.Position() + binwidth; i = i + binwidth) {
+	for (uint64_t i = binmax; i + binwidth < record.Position(); i = i + binwidth) {
 		fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n",
 						 curchr + 1,
 						 i,
@@ -65,28 +90,16 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 						 0,
 						 0
 						);
-		binmax = i;
 	}
-
-	for(auto read = read_cache.begin(); read != read_cache.end();) {
-		if (record_chr != curchr || read->second.end < binmin) {
-			read = read_cache.erase(read);
-		} else {
-			read++;
-		}
-	}
-
-	if (record_chr != curchr) {
-		curchr = record_chr;
-		binmin = 0;
-		binmax = 0;
-	}
+	binmax = record.Position() + (record.Position() % binwidth);
 
 	// Add bins
-	for(uint64_t i = binmax + binwidth; i < record.PositionEnd() + binwidth; i = i + binwidth) {
+	for(uint64_t i = binmax; i < record.PositionEnd() + binwidth; i = i + binwidth) {
 		active_bins.emplace(i, (target_counts_t){0, 0});
 		binmax = i;
 	}
+
+	binmax = record.PositionEnd() + binwidth + (record.PositionEnd() % binwidth);
 
     // this is the first read in the pair; push to cache
     if(read_cache.find(read_name) == read_cache.end()) {
