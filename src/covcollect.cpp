@@ -36,8 +36,6 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 
 	if(!(n_reads % 10000)) {
 		std::cout << "active_bins.size()= " << active_bins.size() << "\n";
-		std::cout << "binmin= " << binmin << "\n";
-		std::cout << "binmax= " << binmax << "\n";
 	}
 
 	if (record_chr != curchr) {
@@ -82,24 +80,23 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 		}
 	}
 
-	// TODO: print missing bins. Assign binmax
-
 	for (uint64_t i = binmax; i + binwidth < record.Position(); i = i + binwidth) {
-		fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\tfiller\n",
+		fprintf(outfile, "%d\t%lu\t%lu\t%d\t%d\n",
 						 curchr + 1,
 						 i,
 						 i + binwidth,
 						 0,
 						 0
 						);
-//		binmax = i + binwidth;
 	}
 	binmax = (record.Position() / binwidth) * binwidth;
 
 	// Add bins
 	for(uint64_t i = binmax; i < record.PositionEnd() + binwidth; i = i + binwidth) {
+		if (active_bins.find(i)) {
+			throw runtime_error(i);
+		}
 		active_bins.emplace(i, (target_counts_t){0, 0});
-//		binmax = i + binwidth;
 	}
 	binmax = ((record.PositionEnd() / binwidth) + 2) * binwidth;
 
