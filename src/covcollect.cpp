@@ -36,6 +36,8 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 
 	if(!(n_reads % 10000)) {
 		std::cout << "active_bins.size()= " << active_bins.size() << "\n";
+		std::cout << "binmin= " << binmin << "\n";
+		std::cout << "binmax= " << binmax << "\n";
 	}
 
 	if (record_chr != curchr) {
@@ -92,6 +94,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 						);
 		binmax = i;
 	}
+	binmax += binwidth;
 
 	// Add bins
 	for(uint64_t i = binmax; i < record.PositionEnd() + binwidth; i = i + binwidth) {
