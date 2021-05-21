@@ -34,7 +34,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	std::string read_name = record.Qname();
 
 	if(!(n_reads % 1000)) {
-		std::cout << "active_bins.size()= " << active_bins.size() << "\n"
+		std::cout << "active_bins.size()= " << active_bins.size() << "\n";
 	}
 
 	int32_t record_chr = record.ChrID();
