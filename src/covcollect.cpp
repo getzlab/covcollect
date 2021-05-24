@@ -25,8 +25,8 @@ void cc_walker::walk_all() {
 }
 
 uint32_t cc_walker::n_overlap(const uint32_t binstart, uint32_t binend, uint32_t start, uint32_t end) {
-   if(start > binstart - this->pad || binstart + this->pad > end) return 0;
-   return MIN(binend - this->pad, end) - MAX(start, binstart + this->pad);
+   if(start > binstart || binstart > end) return 0;
+   return MIN(binend, end) - MAX(start, binstart);
 }
 
 
@@ -124,7 +124,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord &record) {
 			}
 		);
 
-		for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
+		for (auto& bin = active_bins.begin(); bin != active_bins.end(); bin++) {
 			bin->second.n_corrected += n_overlap(bin->first,
 												 bin->first + binwidth,
 												 record.Position(),
