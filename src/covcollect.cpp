@@ -40,6 +40,8 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord &record) {
 	for (auto bin = ordered_active_bins.begin(); bin != ordered_active_bins.end(); ++bin) {
 		std::cout << bin->first << ", ";
 	}
+	std::cout << "binmin: " << binmin << "\n";
+	std::cout << "binmax: " << binmax << "\n";
 	if(!(n_reads % 100)) {
 		throw runtime_error("stop");
 	}
