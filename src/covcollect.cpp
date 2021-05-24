@@ -70,13 +70,13 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord &record) {
 
 		binmin = record.Position() - (record.Position() % binwidth);
 
-		for (auto read = read_cache.begin(); read != read_cache.end();) {
-			if (read->second.end < binmin) {
-				read = read_cache.erase(read);
-			} else {
-				read++;
-			}
-		}
+//		for (auto read = read_cache.begin(); read != read_cache.end();) {
+//			if (read->second.end < binmin) {
+//				read = read_cache.erase(read);
+//			} else {
+//				read++;
+//			}
+//		}
 	}
 
 	// Print gaps
