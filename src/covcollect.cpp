@@ -25,7 +25,7 @@ void cc_walker::walk_all() {
 }
 
 uint32_t cc_walker::n_overlap(const uint32_t binstart, uint32_t binend, uint32_t start, uint32_t end) {
-   if(start > binstart || binstart > end) return 0;
+   if(start > binstart + this->binwidth || binstart > end) return 0;
    return MIN(binend, end) - MAX(start, binstart);
 }
 
