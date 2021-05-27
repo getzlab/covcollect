@@ -142,8 +142,7 @@ int main(int argc, char** argv) {
    if(!walker::basic_argparse(argc, argv, &args)) exit(1);
 
    CC::cc_walker w = CC::cc_walker(args.bam_in, args.input_file);
-   w.set_binwidth(200); // TODO: allow this to be specifiable
-
+   w.set_binwidth(args.bin_width);
    if(!w.set_output_file(args.output_file)) exit(1);
 
    w.walk_all();
