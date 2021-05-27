@@ -41,7 +41,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord &record) {
 			fprintf(outfile, "%s\t%lu\t%lu\t%d\t%d\n",
 					header.IDtoName(curchr).c_str(),
 					bin->first,
-					bin->first + binwidth,
+					bin->first + binwidth - 1,
 					bin->second.n_corrected,
 					bin->second.n_uncorrected
 					);
@@ -61,7 +61,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord &record) {
 			fprintf(outfile, "%s\t%lu\t%lu\t%d\t%d\n",
 					header.IDtoName(curchr).c_str(),
 					bin->first,
-					bin->first + binwidth,
+					bin->first + binwidth - 1,
 					bin->second.n_corrected,
 					bin->second.n_uncorrected
 					);
@@ -77,7 +77,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord &record) {
 		fprintf(outfile, "%s\t%lu\t%lu\t%d\t%d\n",
 				header.IDtoName(curchr).c_str(),
 				i,
-				i + binwidth,
+				i + binwidth - 1,
 				0,
 				0
 				);
@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
    if(!walker::basic_argparse(argc, argv, &args)) exit(1);
 
    CC::cc_walker w = CC::cc_walker(args.bam_in, args.input_file);
-   w.set_binwidth(25); // TODO: allow this to be specifiable
+   w.set_binwidth(200); // TODO: allow this to be specifiable
 
    if(!w.set_output_file(args.output_file)) exit(1);
 
