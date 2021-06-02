@@ -229,7 +229,7 @@ int main(int argc, char** argv) {
       if(!w.set_output_file(args.output_file)) exit(1);
       w.walk_all();
    } else {
-      exit(1);
+      throw runtime_error("Invalid input to -i. Provide a positive interer for bin mode, or a valid file path to an interval file for interval mode.");
    }
 
    return 0;
