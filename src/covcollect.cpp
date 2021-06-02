@@ -103,28 +103,16 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord &record) {
 		);
 
 		for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
-			bin->second.n_corrected += n_overlap(bin->first,
-												 bin->first + binwidth,
-												 record.Position(),
-												 record.PositionEnd());
-			bin->second.n_uncorrected += n_overlap(bin->first,
-												   bin->first + binwidth,
-												   record.Position(),
-												   record.PositionEnd());
+			bin->second.n_corrected += n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
+			bin->second.n_uncorrected += n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
 		}
 
 	} else {
 		uint32_t ovlpstart = MAX((int32_t ) read_cache[read_name].end, (int32_t ) record.Position());
 
 		for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
-			bin->second.n_uncorrected += n_overlap(bin->first,
-												   bin->first + binwidth,
-												   record.Position(),
-												   record.PositionEnd());
-			bin->second.n_corrected += n_overlap(bin->first,
-											     bin->first + binwidth,
-												 ovlpstart,
-												 record.PositionEnd());
+			bin->second.n_uncorrected += n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
+			bin->second.n_corrected += n_overlap(bin->first, bin->first + binwidth, ovlpstart, record.PositionEnd());
 		}
 
 		// remove from cache
