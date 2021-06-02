@@ -50,8 +50,6 @@ class cc_walker : public walker::walker {
 class cc_bin_walker : public walker::walker {
    public:
    bool walk_apply(const SeqLib::BamRecord& record);
-   void load_intervals(uint32_t pad);
-   void set_binwidth(uint32_t binwidth);
    void walk_all();
    uint32_t n_overlap(const uint32_t binstart, uint32_t binend, uint32_t start, uint32_t end);
 

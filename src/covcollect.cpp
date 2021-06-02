@@ -99,11 +99,6 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
    return 1;
 }
 
-
-void cc_bin_walker::set_binwidth(uint32_t binwidth) {
-	this->binwidth = binwidth;
-}
-
 void cc_bin_walker::walk_all() {
    walker::walk();
 }
