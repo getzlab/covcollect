@@ -1,6 +1,6 @@
-FROM gcr.io/broad-getzlab-workflows/base_image:v0.0.4
+FROM gcr.io/broad-getzlab-workflows/base_image:v0.0.5
 
-WORKDIR build
+WORKDIR /build
 COPY src .
 RUN make
 
