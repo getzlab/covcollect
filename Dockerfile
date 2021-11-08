@@ -6,4 +6,4 @@ RUN make
 
 WORKDIR /app
 ENV PATH=$PATH:/app
-COPY covcollect .
+RUN cp /build/covcollect /app
