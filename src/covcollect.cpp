@@ -34,6 +34,10 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
    if(region_idx != cur_region_idx) {
       // any reads left in the cache will all be singletons
       for(const auto& read : read_cache) {
+	 /*if(intervals[read.second.reg_idx].pos1 != cur_region.pos1) {
+	    printf("%d %d\n", region_idx, read.second.reg_idx);
+	    exit(1);
+	 }*/
 	 target_coverage.n_corrected += n_overlap(cur_region, read.second.start, read.second.end);
 	 target_coverage.n_uncorrected += n_overlap(cur_region, read.second.start, read.second.end);
       }
