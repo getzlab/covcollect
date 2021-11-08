@@ -10,9 +10,19 @@ using namespace std;
 
 namespace CC {
 
-void cc_walker::load_intervals(uint32_t pad) {
-   intervals.ReadBED(interval_list_path, header);
-   for(auto& region : intervals) region.Pad(pad);
+void cc_walker::load_intervals(uint32_t pad, int32_t chr_idx, uint32_t start, uint32_t end) {
+   SeqLib::GenomicRegionCollection<> all_intervals;
+   all_intervals.ReadBED(interval_list_path, header);
+   // trim intervals outside of (start, end)
+   uint32_t idx = 0;
+   for(auto& region : all_intervals) {
+      // interval does not lie within trimming region
+      if(chr_idx != -1 && (region.chr != chr_idx || region.pos1 < start || region.pos2 > end)) {
+	 continue;
+      }
+      region.Pad(pad);
+      intervals.add(region);
+   }
    this->pad = pad;
 }
 
@@ -210,8 +220,33 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
 }
 
 int main(int argc, char** argv) { 
+   // parse common args
    walker::basic_arg_t args = {};
    if(!walker::basic_argparse(argc, argv, &args)) exit(1);
+
+   // parse args for trimming region
+   CC::extra_args_t extra_args = {
+     .chr_idx = -1,
+     .start = 0,
+     .end = 0xFFFFFFFF
+   };
+
+   char arg;
+   optind = 1;
+   while((arg = getopt(argc, argv, "c:s:e:")) != -1) {
+      // TODO: parse -L chr:start-end syntax
+      switch(arg) {
+	 case 'c' :
+	    extra_args.chr_idx = atoi(optarg);
+	    break;
+	 case 's' : // position to start in BAM
+	    extra_args.start = atoi(optarg);
+	    break;
+	 case 'e' : // position to end in BAM
+	    extra_args.end = atoi(optarg);
+	    break;
+      }
+   }
 
    bool use_bins = true;
 
@@ -230,7 +265,7 @@ int main(int argc, char** argv) {
       w.walk_all();
    } else if (is_file) {
       CC::cc_walker w = CC::cc_walker(args.bam_in, args.input_file);
-      w.load_intervals(151);
+      w.load_intervals(151, extra_args.chr_idx, extra_args.start, extra_args.end);
       if(!w.set_output_file(args.output_file)) exit(1);
       w.walk_all();
    } else {

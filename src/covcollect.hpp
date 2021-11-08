@@ -21,10 +21,16 @@ typedef struct t {
    uint32_t n_uncorrected;
 } target_counts_t;
 
+typedef struct ea {
+   int32_t chr_idx;
+   uint32_t start;
+   uint32_t end;
+} extra_args_t;
+
 class cc_walker : public walker::walker {
    public:
    bool walk_apply(const SeqLib::BamRecord& record);
-   void load_intervals(uint32_t pad);
+   void load_intervals(uint32_t pad, int32_t chr_idx, uint32_t start, uint32_t end);
    void walk_all();
    uint32_t n_overlap(const SeqLib::GenomicRegion& region, uint32_t start, uint32_t end);
 
