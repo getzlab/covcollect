@@ -113,8 +113,9 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
    return 1;
 }
 
-void cc_bin_walker::walk_all() {
-   walker::walk();
+void cc_bin_walker::walk_all(int32_t chr_idx, uint32_t start, uint32_t end) {
+   if(chr_idx == -1) walker::walk();
+   else walker::walk(SeqLib::GenomicRegion(chr_idx, start, end));
 }
 
 uint32_t cc_bin_walker::n_overlap(const uint32_t binstart, uint32_t binend, uint32_t start, uint32_t end) {
@@ -127,8 +128,8 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
     std::string read_name = record.Qname();
     int32_t record_chr = record.ChrID();
 
+   // we've switched chromosomes; flush cache
     if (record_chr != curchr) {
-        // print and erase everything
         std::map<uint64_t, target_counts_t> ordered_active_bins(active_bins.begin(), active_bins.end());
         for (auto bin = ordered_active_bins.begin(); bin != ordered_active_bins.end(); ++bin) {
             fprintf(outfile, "%s\t%lu\t%lu\t%d\t%d\n",
@@ -262,7 +263,7 @@ int main(int argc, char** argv) {
    if (use_bins) {
       CC::cc_bin_walker  w = CC::cc_bin_walker(args.bam_in, stoi(args.input_file));   
       if(!w.set_output_file(args.output_file)) exit(1);
-      w.walk_all();
+      w.walk_all(extra_args.chr_idx, extra_args.start, extra_args.end);
    } else if (is_file) {
       CC::cc_walker w = CC::cc_walker(args.bam_in, args.input_file);
       w.load_intervals(151, extra_args.chr_idx, extra_args.start, extra_args.end);
