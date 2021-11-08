@@ -45,6 +45,32 @@ class cc_walker : public walker::walker {
    uint16_t curchr = 0;
 };
 
+
+
+class cc_bin_walker : public walker::walker {
+   public:
+   bool walk_apply(const SeqLib::BamRecord& record);
+   void walk_all();
+   uint32_t n_overlap(const uint32_t binstart, uint32_t binend, uint32_t start, uint32_t end);
+
+   cc_bin_walker(const std::string& bam_in, const uint32_t binwidth) : walker(bam_in), binwidth(binwidth) {}
+
+   protected:
+   target_counts_t target_coverage = {0, 0};
+
+   std::unordered_map<std::string, read_boundary_t> read_cache;
+   std::unordered_map<uint64_t, target_counts_t> active_bins;
+
+   uint32_t curstart = 0;
+   uint32_t curend = 0;
+   int32_t curchr = 0;
+
+   uint32_t binwidth = 0;
+   uint64_t binmin = 0;
+   uint64_t binmax = 0;
+   std::string curchrname = "";
+};
+
 }
 
 #endif
