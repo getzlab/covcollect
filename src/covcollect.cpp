@@ -28,6 +28,8 @@ void cc_walker::load_intervals(uint32_t pad, string chr, uint32_t start, uint32_
 }
 
 void cc_walker::walk_all() {
+   if(intervals.IsEmpty()) return;
+
    cur_region = intervals[0];
    walker::walk(intervals);
 }
@@ -130,7 +132,7 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
     std::string read_name = record.Qname();
     int32_t record_chr = record.ChrID();
 
-   // we've switched chromosomes; flush cache
+    // we've switched chromosomes; flush cache
     if (record_chr != curchr) {
         std::map<uint64_t, target_counts_t> ordered_active_bins(active_bins.begin(), active_bins.end());
         for (auto bin = ordered_active_bins.begin(); bin != ordered_active_bins.end(); ++bin) {
