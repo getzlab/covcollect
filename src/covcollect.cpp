@@ -10,11 +10,12 @@ using namespace std;
 
 namespace CC {
 
-void cc_walker::load_intervals(uint32_t pad, int32_t chr_idx, uint32_t start, uint32_t end) {
+void cc_walker::load_intervals(uint32_t pad, string chr, uint32_t start, uint32_t end) {
    SeqLib::GenomicRegionCollection<> all_intervals;
    all_intervals.ReadBED(interval_list_path, header);
    // trim intervals outside of (start, end)
    uint32_t idx = 0;
+   int32_t chr_idx = chr != "-1" ? header.Name2ID(chr) : -1;
    for(auto& region : all_intervals) {
       // interval does not lie within trimming region
       if(chr_idx != -1 && (region.chr != chr_idx || region.pos1 < start || region.pos2 > end)) {
@@ -113,7 +114,8 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
    return 1;
 }
 
-void cc_bin_walker::walk_all(int32_t chr_idx, uint32_t start, uint32_t end) {
+void cc_bin_walker::walk_all(string chr, uint32_t start, uint32_t end) {
+   int32_t chr_idx = chr != "-1" ? header.Name2ID(chr) : -1;
    if(chr_idx == -1) walker::walk();
    else walker::walk(SeqLib::GenomicRegion(chr_idx, start, end));
 }
@@ -227,7 +229,7 @@ int main(int argc, char** argv) {
 
    // parse args for trimming region
    CC::extra_args_t extra_args = {
-     .chr_idx = -1,
+     .chr = "-1",
      .start = 0,
      .end = 0xFFFFFFFF
    };
@@ -238,7 +240,7 @@ int main(int argc, char** argv) {
       // TODO: parse -L chr:start-end syntax
       switch(arg) {
 	 case 'c' :
-	    extra_args.chr_idx = atoi(optarg);
+	    extra_args.chr = string(optarg);
 	    break;
 	 case 's' : // position to start in BAM
 	    extra_args.start = atoi(optarg);
@@ -261,12 +263,12 @@ int main(int argc, char** argv) {
    std::ifstream is_file(args.input_file);
 
    if (use_bins) {
-      CC::cc_bin_walker  w = CC::cc_bin_walker(args.bam_in, stoi(args.input_file));   
+      CC::cc_bin_walker w = CC::cc_bin_walker(args.bam_in, stoi(args.input_file));   
       if(!w.set_output_file(args.output_file)) exit(1);
-      w.walk_all(extra_args.chr_idx, extra_args.start, extra_args.end);
+      w.walk_all(extra_args.chr, extra_args.start, extra_args.end);
    } else if (is_file) {
       CC::cc_walker w = CC::cc_walker(args.bam_in, args.input_file);
-      w.load_intervals(151, extra_args.chr_idx, extra_args.start, extra_args.end);
+      w.load_intervals(151, extra_args.chr, extra_args.start, extra_args.end);
       if(!w.set_output_file(args.output_file)) exit(1);
       w.walk_all();
    } else {
