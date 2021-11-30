@@ -97,22 +97,14 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
         }
       );
 
-   // this is the second read in the pair; lookup first read in cache to see
-   // if it overlaps
+   // this is the second read in the pair; write coverage to target
    } else {
-      // if the reads overlap, consider them as a single entity
-      if(MAX(0, (int32_t) read_cache[read_name].end - (int32_t) record.Position()) > 0) {
-	 target_coverage.n_corrected += n_overlap(cur_region, read_cache[read_name].start, record.PositionEnd());
-
-      // otherwise, consider their contributions separately
-      } else {
-	 target_coverage.n_corrected += n_overlap(cur_region, read_cache[read_name].start, read_cache[read_name].end) + 
-           n_overlap(cur_region, record.Position(), record.PositionEnd());
-      }
+      target_coverage.n_corrected += n_overlap(cur_region, read_cache[read_name].start, record.PositionEnd());
 
       // save coverage that doesn't account for overlaps for demo purposes
-      target_coverage.n_uncorrected += n_overlap(cur_region, read_cache[read_name].start, read_cache[read_name].end) + 
-	n_overlap(cur_region, record.Position(), record.PositionEnd());
+      target_coverage.n_uncorrected += n_overlap(cur_region, read_cache[read_name].start, read_cache[read_name].end) + /* first read */
+	n_overlap(cur_region, record.Position(), record.PositionEnd()) + /* second read */
+        (read_cache[read_name].end < record.Position() ? n_overlap(cur_region, read_cache[read_name].end, record.Position()) : 0); /* inner distance, if applicable */
 
       // remove from cache
       read_cache.erase(read_name);
@@ -206,17 +198,20 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
          }
        );
 
-       for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
+       /*for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
            bin->second.n_corrected += n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
            bin->second.n_uncorrected += n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
-       }
+       }*/
 
+   // this is the second read in the pair; write coverage to bins
    } else {
        uint32_t ovlpstart = MAX((int32_t ) read_cache[read_name].end, (int32_t ) record.Position());
 
        for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
-           bin->second.n_uncorrected += n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
-           bin->second.n_corrected += n_overlap(bin->first, bin->first + binwidth, ovlpstart, record.PositionEnd());
+           bin->second.n_corrected += n_overlap(bin->first, bin->first + binwidth, read_cache[read_name].start, record.PositionEnd());
+           bin->second.n_uncorrected += n_overlap(bin->first, bin->first + binwidth, read_cache[read_name].start, read_cache[read_name].end) + /* first read */
+	                                n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd()) + /* second read */
+				        (read_cache[read_name].end < record.Position() ? n_overlap(bin->first, bin->first + binwidth, read_cache[read_name].end, record.Position()) : 0); /* inner distance, if applicable */
        }
 
        // remove from cache
