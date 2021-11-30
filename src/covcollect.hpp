@@ -29,6 +29,7 @@ typedef struct ea {
 
 class cc_walker : public walker::walker {
    public:
+   bool filter_read(const SeqLib::BamRecord& record) override;
    bool walk_apply(const SeqLib::BamRecord& record);
    void load_intervals(uint32_t pad, std::string chr, uint32_t start, uint32_t end);
    void walk_all();

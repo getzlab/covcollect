@@ -10,6 +10,11 @@ using namespace std;
 
 namespace CC {
 
+// override base filter to also remove non-proper paired reads
+bool cc_walker::filter_read(const SeqLib::BamRecord& record) {
+   return walker::filter_read(record) || !record.ProperPair();
+}
+
 void cc_walker::load_intervals(uint32_t pad, string chr, uint32_t start, uint32_t end) {
    SeqLib::GenomicRegionCollection<> all_intervals;
    all_intervals.ReadBED(interval_list_path, header);
