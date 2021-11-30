@@ -119,7 +119,10 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 void cc_bin_walker::walk_all(string chr, uint32_t start, uint32_t end) {
    int32_t chr_idx = chr != "-1" ? header.Name2ID(chr) : -1;
    if(chr_idx == -1) walker::walk();
-   else walker::walk(SeqLib::GenomicRegion(chr_idx, start, end));
+   else {
+      binmax = start - (start % binwidth);
+      walker::walk(SeqLib::GenomicRegion(chr_idx, start, end));
+   }
 }
 
 uint32_t cc_bin_walker::n_overlap(const uint32_t binstart, uint32_t binend, uint32_t start, uint32_t end) {
