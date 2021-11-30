@@ -72,7 +72,6 @@ class cc_bin_walker : public walker::walker {
    int32_t curchr = 0;
 
    uint32_t binwidth = 0;
-   uint64_t binmin = 0;
    uint64_t binmax = 0;
    std::string curchrname = "";
 };

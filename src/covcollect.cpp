@@ -147,7 +147,6 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
        active_bins.clear();
        read_cache.clear();
        curchr = record_chr;
-       binmin = 0;
        binmax = 0;
    } else {
        std::map<uint64_t, target_counts_t> ordered_active_bins(
@@ -166,8 +165,6 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
            );
            active_bins.erase(bin->first);
        }
-
-       binmin = record.Position() - (record.Position() % binwidth);
    }
 
    // Print gaps
