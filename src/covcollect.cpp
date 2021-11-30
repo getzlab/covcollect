@@ -119,7 +119,9 @@ void cc_bin_walker::walk_all(string chr, uint32_t start, uint32_t end) {
    else {
       binmax = start - (start % binwidth);
       curchr = chr_idx;
-      walker::walk(SeqLib::GenomicRegion(chr_idx, start, end));
+      walker::walk(SeqLib::GenomicRegion(chr_idx, start < 1000 ? 0 : (start - 1000), end));
+      // NOTE: we add a 1kb buffer to the start to capture any readpairs upstream of start that 
+      //       nonetheless might overlap it
    }
 }
 
