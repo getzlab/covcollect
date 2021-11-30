@@ -118,6 +118,7 @@ void cc_bin_walker::walk_all(string chr, uint32_t start, uint32_t end) {
    if(chr_idx == -1) walker::walk();
    else {
       binmax = start - (start % binwidth);
+      curchr = chr_idx;
       walker::walk(SeqLib::GenomicRegion(chr_idx, start, end));
    }
 }
