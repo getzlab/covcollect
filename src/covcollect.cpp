@@ -3,6 +3,8 @@
 
 #include <SeqLib/GenomicRegionCollection.h>
 
+#include <math.h>
+
 #define MAX(x, y) (((y) > (x)) ? (y) : (x))
 #define MIN(x, y) (((y) < (x)) ? (y) : (x))
 
@@ -57,18 +59,20 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	    exit(1);
 	 }*/
 	 target_coverage.n_corrected += n_overlap(cur_region, read.second.start, read.second.end);
-	 target_coverage.n_uncorrected += n_overlap(cur_region, read.second.start, read.second.end);
+
+	 // TODO: update mean fragment length for this region
+	 target_coverage.mean_fraglen = 0;
       }
       read_cache.clear();
 
-      fprintf(outfile, "%s\t%d\t%d\t%d\t%d\n",
+      fprintf(outfile, "%s\t%d\t%d\t%d\t%0.0f\n",
         header.IDtoName(cur_region.chr).c_str(),
         cur_region.pos1 + this->pad,
         cur_region.pos2 - this->pad,
         target_coverage.n_corrected,
-        target_coverage.n_uncorrected
+        target_coverage.mean_fraglen
       );
-      target_coverage = {0, 0};
+      target_coverage = {0, 0, 0};
 
       // we may have skipped over multiple empty regions
       for(size_t r = cur_region_idx + 1; r < region_idx; r++) {
@@ -101,10 +105,8 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
    } else {
       target_coverage.n_corrected += n_overlap(cur_region, read_cache[read_name].start, record.PositionEnd());
 
-      // save coverage that doesn't account for overlaps for demo purposes
-      target_coverage.n_uncorrected += n_overlap(cur_region, read_cache[read_name].start, read_cache[read_name].end) + /* first read */
-	n_overlap(cur_region, record.Position(), record.PositionEnd()) + /* second read */
-        (read_cache[read_name].end < record.Position() ? n_overlap(cur_region, read_cache[read_name].end, record.Position()) : 0); /* inner distance, if applicable */
+      // TODO: update mean fragment length for this region
+      target_coverage.mean_fraglen = 0;
 
       // remove from cache
       read_cache.erase(read_name);
@@ -139,12 +141,14 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
    if (record_chr != curchr) {
        std::map<uint64_t, target_counts_t> ordered_active_bins(active_bins.begin(), active_bins.end());
        for (auto bin = ordered_active_bins.begin(); bin != ordered_active_bins.end(); ++bin) {
-           fprintf(outfile, "%s\t%lu\t%lu\t%d\t%d\n",
+           fprintf(outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\t%d\n",
              header.IDtoName(curchr).c_str(),
              bin->first,
              bin->first + binwidth - 1,
              bin->second.n_corrected,
-             bin->second.n_uncorrected
+             bin->second.mean_fraglen,
+             sqrt(bin->second.var_fraglen/(bin->second.n_reads)),
+             bin->second.n_reads
            );
        }
        active_bins.clear();
@@ -159,12 +163,14 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
                    ++bin) {
 
            fprintf(
-             outfile, "%s\t%lu\t%lu\t%d\t%d\n",
+             outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\t%d\n",
              header.IDtoName(curchr).c_str(),
              bin->first,
              bin->first + binwidth - 1,
              bin->second.n_corrected,
-             bin->second.n_uncorrected
+             bin->second.mean_fraglen,
+             sqrt(bin->second.var_fraglen/(bin->second.n_reads)),
+             bin->second.n_reads
            );
            active_bins.erase(bin->first);
        }
@@ -173,11 +179,13 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
    // Print gaps
    for (uint64_t i = binmax; i + binwidth < record.Position(); i = i + binwidth) {
        fprintf(
-         outfile, "%s\t%lu\t%lu\t%d\t%d\n",
+         outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\t%d\n",
          header.IDtoName(curchr).c_str(),
          i,
          i + binwidth - 1,
          0,
+         0.0,
+         0.0,
          0
        );
    }
@@ -186,7 +194,7 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
 
    // Add bins
    for (uint64_t i = binmax; i <= record.PositionEnd(); i = i + binwidth) {
-       active_bins.emplace(i, (target_counts_t ) { 0, 0 });
+       active_bins.emplace(i, (target_counts_t ) { 0, 0, 0, 0 });
    }
 
    binmax = MAX(binmax, ((record.PositionEnd() / binwidth) + 1) * binwidth);
@@ -201,20 +209,25 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
          }
        );
 
-       /*for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
-           bin->second.n_corrected += n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
-           bin->second.n_uncorrected += n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
-       }*/
-
    // this is the second read in the pair; write coverage to bins
    } else {
-       uint32_t ovlpstart = MAX((int32_t ) read_cache[read_name].end, (int32_t ) record.Position());
+       uint32_t midpoint = (read_cache[read_name].start + record.PositionEnd())/2;
 
        for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
            bin->second.n_corrected += n_overlap(bin->first, bin->first + binwidth, read_cache[read_name].start, record.PositionEnd());
-           bin->second.n_uncorrected += n_overlap(bin->first, bin->first + binwidth, read_cache[read_name].start, read_cache[read_name].end) + /* first read */
-	                                n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd()) + /* second read */
-				        (read_cache[read_name].end < record.Position() ? n_overlap(bin->first, bin->first + binwidth, read_cache[read_name].end, record.Position()) : 0); /* inner distance, if applicable */
+
+           // update mean fragment length for this bin, if read's midpoint is in it
+           if(midpoint >= bin->first && midpoint < bin->first + binwidth) {
+               uint32_t fraglen = record.PositionEnd() - read_cache[read_name].start;
+               if(bin->second.n_reads == 0) {
+                   bin->second.mean_fraglen = fraglen;
+               } else {
+                   float fld = fraglen - bin->second.mean_fraglen;
+                   bin->second.mean_fraglen += fld/(bin->second.n_reads + 1);
+                   bin->second.var_fraglen += fld*(fraglen - bin->second.mean_fraglen);
+               }
+               bin->second.n_reads++;
+           }
        }
 
        // remove from cache
