@@ -3,6 +3,8 @@
 
 #include <SeqLib/GenomicRegionCollection.h>
 
+#include <math.h>
+
 #define MAX(x, y) (((y) > (x)) ? (y) : (x))
 #define MIN(x, y) (((y) < (x)) ? (y) : (x))
 
@@ -139,12 +141,13 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
    if (record_chr != curchr) {
        std::map<uint64_t, target_counts_t> ordered_active_bins(active_bins.begin(), active_bins.end());
        for (auto bin = ordered_active_bins.begin(); bin != ordered_active_bins.end(); ++bin) {
-           fprintf(outfile, "%s\t%lu\t%lu\t%d\t%0.0f\n",
+           fprintf(outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\n",
              header.IDtoName(curchr).c_str(),
              bin->first,
              bin->first + binwidth - 1,
              bin->second.n_corrected,
-             bin->second.mean_fraglen
+             bin->second.mean_fraglen,
+             sqrt(bin->second.var_fraglen/(bin->second.n_reads))
            );
        }
        active_bins.clear();
@@ -159,12 +162,13 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
                    ++bin) {
 
            fprintf(
-             outfile, "%s\t%lu\t%lu\t%d\t%0.0f\n",
+             outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\n",
              header.IDtoName(curchr).c_str(),
              bin->first,
              bin->first + binwidth - 1,
              bin->second.n_corrected,
-             bin->second.mean_fraglen
+             bin->second.mean_fraglen,
+             sqrt(bin->second.var_fraglen/(bin->second.n_reads))
            );
            active_bins.erase(bin->first);
        }
@@ -173,11 +177,12 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
    // Print gaps
    for (uint64_t i = binmax; i + binwidth < record.Position(); i = i + binwidth) {
        fprintf(
-         outfile, "%s\t%lu\t%lu\t%d\t%0.0f\n",
+         outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\n",
          header.IDtoName(curchr).c_str(),
          i,
          i + binwidth - 1,
          0,
+         0.0,
          0.0
        );
    }
@@ -186,7 +191,7 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
 
    // Add bins
    for (uint64_t i = binmax; i <= record.PositionEnd(); i = i + binwidth) {
-       active_bins.emplace(i, (target_counts_t ) { 0, 0, 0 });
+       active_bins.emplace(i, (target_counts_t ) { 0, 0, 0, 0 });
    }
 
    binmax = MAX(binmax, ((record.PositionEnd() / binwidth) + 1) * binwidth);
@@ -210,10 +215,13 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
 
            // update mean fragment length for this bin, if read's midpoint is in it
            if(midpoint >= bin->first && midpoint < bin->first + binwidth) {
+               uint32_t fraglen = record.PositionEnd() - read_cache[read_name].start;
                if(bin->second.n_reads == 0) {
-                   bin->second.mean_fraglen = record.PositionEnd() - read_cache[read_name].start;
+                   bin->second.mean_fraglen = fraglen;
                } else {
-                   bin->second.mean_fraglen += (record.PositionEnd() - read_cache[read_name].start - bin->second.mean_fraglen)/(bin->second.n_reads + 1);
+                   float fld = fraglen - bin->second.mean_fraglen;
+                   bin->second.mean_fraglen += fld/(bin->second.n_reads + 1);
+                   bin->second.var_fraglen += fld*(fraglen - bin->second.mean_fraglen);
                }
                bin->second.n_reads++;
            }
