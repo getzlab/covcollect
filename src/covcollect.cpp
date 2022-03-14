@@ -141,13 +141,14 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
    if (record_chr != curchr) {
        std::map<uint64_t, target_counts_t> ordered_active_bins(active_bins.begin(), active_bins.end());
        for (auto bin = ordered_active_bins.begin(); bin != ordered_active_bins.end(); ++bin) {
-           fprintf(outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\n",
+           fprintf(outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\t%d\n",
              header.IDtoName(curchr).c_str(),
              bin->first,
              bin->first + binwidth - 1,
              bin->second.n_corrected,
              bin->second.mean_fraglen,
-             sqrt(bin->second.var_fraglen/(bin->second.n_reads))
+             sqrt(bin->second.var_fraglen/(bin->second.n_reads)),
+             bin->second.n_reads
            );
        }
        active_bins.clear();
@@ -162,13 +163,14 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
                    ++bin) {
 
            fprintf(
-             outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\n",
+             outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\t%d\n",
              header.IDtoName(curchr).c_str(),
              bin->first,
              bin->first + binwidth - 1,
              bin->second.n_corrected,
              bin->second.mean_fraglen,
-             sqrt(bin->second.var_fraglen/(bin->second.n_reads))
+             sqrt(bin->second.var_fraglen/(bin->second.n_reads)),
+             bin->second.n_reads
            );
            active_bins.erase(bin->first);
        }
@@ -177,13 +179,14 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
    // Print gaps
    for (uint64_t i = binmax; i + binwidth < record.Position(); i = i + binwidth) {
        fprintf(
-         outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\n",
+         outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\t%d\n",
          header.IDtoName(curchr).c_str(),
          i,
          i + binwidth - 1,
          0,
          0.0,
-         0.0
+         0.0,
+         0
        );
    }
 
