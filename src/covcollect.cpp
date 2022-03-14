@@ -63,14 +63,14 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
       }
       read_cache.clear();
 
-      fprintf(outfile, "%s\t%d\t%d\t%d\t%d\n",
+      fprintf(outfile, "%s\t%d\t%d\t%d\t%0.0f\n",
         header.IDtoName(cur_region.chr).c_str(),
         cur_region.pos1 + this->pad,
         cur_region.pos2 - this->pad,
         target_coverage.n_corrected,
         target_coverage.mean_fraglen
       );
-      target_coverage = {0, 0};
+      target_coverage = {0, 0, 0};
 
       // we may have skipped over multiple empty regions
       for(size_t r = cur_region_idx + 1; r < region_idx; r++) {
@@ -139,7 +139,7 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
    if (record_chr != curchr) {
        std::map<uint64_t, target_counts_t> ordered_active_bins(active_bins.begin(), active_bins.end());
        for (auto bin = ordered_active_bins.begin(); bin != ordered_active_bins.end(); ++bin) {
-           fprintf(outfile, "%s\t%lu\t%lu\t%d\t%d\n",
+           fprintf(outfile, "%s\t%lu\t%lu\t%d\t%0.0f\n",
              header.IDtoName(curchr).c_str(),
              bin->first,
              bin->first + binwidth - 1,
@@ -159,7 +159,7 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
                    ++bin) {
 
            fprintf(
-             outfile, "%s\t%lu\t%lu\t%d\t%d\n",
+             outfile, "%s\t%lu\t%lu\t%d\t%0.0f\n",
              header.IDtoName(curchr).c_str(),
              bin->first,
              bin->first + binwidth - 1,
@@ -173,12 +173,12 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
    // Print gaps
    for (uint64_t i = binmax; i + binwidth < record.Position(); i = i + binwidth) {
        fprintf(
-         outfile, "%s\t%lu\t%lu\t%d\t%d\n",
+         outfile, "%s\t%lu\t%lu\t%d\t%0.0f\n",
          header.IDtoName(curchr).c_str(),
          i,
          i + binwidth - 1,
          0,
-         0
+         0.0
        );
    }
 
@@ -186,7 +186,7 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
 
    // Add bins
    for (uint64_t i = binmax; i <= record.PositionEnd(); i = i + binwidth) {
-       active_bins.emplace(i, (target_counts_t ) { 0, 0 });
+       active_bins.emplace(i, (target_counts_t ) { 0, 0, 0 });
    }
 
    binmax = MAX(binmax, ((record.PositionEnd() / binwidth) + 1) * binwidth);
@@ -203,13 +203,20 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
 
    // this is the second read in the pair; write coverage to bins
    } else {
-       uint32_t ovlpstart = MAX((int32_t ) read_cache[read_name].end, (int32_t ) record.Position());
+       uint32_t midpoint = (read_cache[read_name].start + record.PositionEnd())/2;
 
        for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
            bin->second.n_corrected += n_overlap(bin->first, bin->first + binwidth, read_cache[read_name].start, record.PositionEnd());
 
-	   // TODO: update mean fragment length for this bin, if read's midpoint is in it
-           bin->second.mean_fraglen = 0;
+           // update mean fragment length for this bin, if read's midpoint is in it
+           if(midpoint >= bin->first && midpoint < bin->first + binwidth) {
+               if(bin->second.n_reads == 0) {
+                   bin->second.mean_fraglen = record.PositionEnd() - read_cache[read_name].start;
+               } else {
+                   bin->second.mean_fraglen += (record.PositionEnd() - read_cache[read_name].start - bin->second.mean_fraglen)/(bin->second.n_reads + 1);
+               }
+               bin->second.n_reads++;
+           }
        }
 
        // remove from cache
