@@ -18,7 +18,7 @@ typedef struct r {
 
 typedef struct t {
    uint32_t n_corrected;
-   uint32_t n_uncorrected;
+   uint32_t mean_fraglen;
 } target_counts_t;
 
 typedef struct ea {
