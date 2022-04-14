@@ -52,7 +52,7 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
    // if we've switched regions, flush the cache and write current counts
    size_t region_idx = reader.GetRegionIdx();
    if(region_idx != cur_region_idx) {
-      // any reads left in the cache will all be singletons
+      // any reads left in the cache will all be in the previous region (which is still called "cur_region")
       for(const auto& read : read_cache) {
 	 /*if(intervals[read.second.reg_idx].pos1 != cur_region.pos1) {
 	    printf("%d %d\n", region_idx, read.second.reg_idx);
@@ -60,28 +60,31 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 	 }*/
 	 target_coverage.n_corrected += n_overlap(cur_region, read.second.start, read.second.end);
 
-	 // TODO: update mean fragment length for this region
-	 target_coverage.mean_fraglen = 0;
+	 // we do not use these reads for calculating fragment length.
       }
       read_cache.clear();
 
-      fprintf(outfile, "%s\t%d\t%d\t%d\t%0.0f\n",
+      fprintf(outfile, "%s\t%d\t%d\t%d\t%0.0f\t%0.0f\t%d\n",
         header.IDtoName(cur_region.chr).c_str(),
         cur_region.pos1 + this->pad,
         cur_region.pos2 - this->pad,
         target_coverage.n_corrected,
-        target_coverage.mean_fraglen
+        target_coverage.mean_fraglen,
+        sqrt(target_coverage.var_fraglen/(target_coverage.n_reads)),
+        target_coverage.n_reads
       );
-      target_coverage = {0, 0, 0};
+      target_coverage = {0, 0, 0, 0};
 
       // we may have skipped over multiple empty regions
       for(size_t r = cur_region_idx + 1; r < region_idx; r++) {
 	 SeqLib::GenomicRegion gr = intervals[r];
-	 fprintf(outfile, "%s\t%d\t%d\t%d\t%d\n",
+	 fprintf(outfile, "%s\t%d\t%d\t%d\t%0.0f\t%0.0f\t%d\n",
 	   header.IDtoName(gr.chr).c_str(),
 	   gr.pos1 + this->pad,
 	   gr.pos2 - this->pad,
 	   0,
+	   0.0,
+	   0.0,
 	   0
 	 );
       }
@@ -105,8 +108,16 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
    } else {
       target_coverage.n_corrected += n_overlap(cur_region, read_cache[read_name].start, record.PositionEnd());
 
-      // TODO: update mean fragment length for this region
-      target_coverage.mean_fraglen = 0;
+      // update mean fragment length for this region
+      uint32_t fraglen = record.PositionEnd() - read_cache[read_name].start;
+      if(target_coverage.n_reads == 0) {
+          target_coverage.mean_fraglen = fraglen;
+      } else {
+          float fld = fraglen - target_coverage.mean_fraglen;
+          target_coverage.mean_fraglen += fld/(target_coverage.n_reads + 1);
+          target_coverage.var_fraglen += fld*(fraglen - target_coverage.mean_fraglen);
+      }
+      target_coverage.n_reads++;
 
       // remove from cache
       read_cache.erase(read_name);
