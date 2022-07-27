@@ -65,27 +65,31 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
       }
       read_cache.clear();
 
-      fprintf(outfile, "%s\t%d\t%d\t%d\t%0.0f\t%0.0f\t%d\n",
+      fprintf(outfile, "%s\t%d\t%d\t%d\t%0.0f\t%0.0f\t%d\t%d\t%d\n",
         header.IDtoName(cur_region.chr).c_str(),
         cur_region.pos1 + this->pad,
         cur_region.pos2 - this->pad,
         target_coverage.n_corrected,
         target_coverage.mean_fraglen,
         sqrt(target_coverage.var_fraglen/(target_coverage.n_frags)),
-        target_coverage.n_frags
+        target_coverage.n_frags,
+        target_coverage.n_tot_reads,
+        target_coverage.n_fail_reads
       );
       target_coverage = {0, 0, 0, 0};
 
       // we may have skipped over multiple empty regions
       for(size_t r = cur_region_idx + 1; r < region_idx; r++) {
 	 SeqLib::GenomicRegion gr = intervals[r];
-	 fprintf(outfile, "%s\t%d\t%d\t%d\t%0.0f\t%0.0f\t%d\n",
+	 fprintf(outfile, "%s\t%d\t%d\t%d\t%0.0f\t%0.0f\t%d\t%d\t%d\n",
 	   header.IDtoName(gr.chr).c_str(),
 	   gr.pos1 + this->pad,
 	   gr.pos2 - this->pad,
 	   0,
 	   0.0,
 	   0.0,
+	   0,
+	   0,
 	   0
 	 );
       }
@@ -96,8 +100,10 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
    }
 
    // apply read filtering; record whether read was filtered
-   // TODO
-
+   bool fail = walker::filter_read(record) || !record.ProperPair();
+   target_coverage.n_fail_reads += (int) fail;
+   target_coverage.n_tot_reads++;
+   if(fail) return 1;
 
    // this is the first read in the pair; push to cache
    if(read_cache.find(read_name) == read_cache.end()) {
