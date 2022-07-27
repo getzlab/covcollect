@@ -70,8 +70,8 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
         cur_region.pos2 - this->pad,
         target_coverage.n_corrected,
         target_coverage.mean_fraglen,
-        sqrt(target_coverage.var_fraglen/(target_coverage.n_reads)),
-        target_coverage.n_reads
+        sqrt(target_coverage.var_fraglen/(target_coverage.n_frags)),
+        target_coverage.n_frags
       );
       target_coverage = {0, 0, 0, 0};
 
@@ -110,14 +110,14 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 
       // update mean fragment length for this region
       uint32_t fraglen = record.PositionEnd() - read_cache[read_name].start;
-      if(target_coverage.n_reads == 0) {
+      if(target_coverage.n_frags == 0) {
           target_coverage.mean_fraglen = fraglen;
       } else {
           float fld = fraglen - target_coverage.mean_fraglen;
-          target_coverage.mean_fraglen += fld/(target_coverage.n_reads + 1);
+          target_coverage.mean_fraglen += fld/(target_coverage.n_frags + 1);
           target_coverage.var_fraglen += fld*(fraglen - target_coverage.mean_fraglen);
       }
-      target_coverage.n_reads++;
+      target_coverage.n_frags++;
 
       // remove from cache
       read_cache.erase(read_name);
@@ -158,8 +158,8 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
              bin->first + binwidth - 1,
              bin->second.n_corrected,
              bin->second.mean_fraglen,
-             sqrt(bin->second.var_fraglen/(bin->second.n_reads)),
-             bin->second.n_reads
+             sqrt(bin->second.var_fraglen/(bin->second.n_frags)),
+             bin->second.n_frags
            );
        }
        active_bins.clear();
@@ -180,8 +180,8 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
              bin->first + binwidth - 1,
              bin->second.n_corrected,
              bin->second.mean_fraglen,
-             sqrt(bin->second.var_fraglen/(bin->second.n_reads)),
-             bin->second.n_reads
+             sqrt(bin->second.var_fraglen/(bin->second.n_frags)),
+             bin->second.n_frags
            );
            active_bins.erase(bin->first);
        }
@@ -230,14 +230,14 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
            // update mean fragment length for this bin, if read's midpoint is in it
            if(midpoint >= bin->first && midpoint < bin->first + binwidth) {
                uint32_t fraglen = record.PositionEnd() - read_cache[read_name].start;
-               if(bin->second.n_reads == 0) {
+               if(bin->second.n_frags == 0) {
                    bin->second.mean_fraglen = fraglen;
                } else {
                    float fld = fraglen - bin->second.mean_fraglen;
-                   bin->second.mean_fraglen += fld/(bin->second.n_reads + 1);
+                   bin->second.mean_fraglen += fld/(bin->second.n_frags + 1);
                    bin->second.var_fraglen += fld*(fraglen - bin->second.mean_fraglen);
                }
-               bin->second.n_reads++;
+               bin->second.n_frags++;
            }
        }
 
