@@ -12,9 +12,10 @@ using namespace std;
 
 namespace CC {
 
-// override base filter to also remove non-proper paired reads
+// override base filter to noop; read filtering occurs within walk_apply, since
+// we are interested in tabulating the number of filtered reads
 bool cc_walker::filter_read(const SeqLib::BamRecord& record) {
-   return walker::filter_read(record) || !record.ProperPair();
+   return false;
 }
 
 void cc_walker::load_intervals(uint32_t pad, string chr, uint32_t start, uint32_t end) {
@@ -93,6 +94,10 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
       cur_region = intervals[region_idx];
       cur_region_idx = region_idx;
    }
+
+   // apply read filtering; record whether read was filtered
+   // TODO
+
 
    // this is the first read in the pair; push to cache
    if(read_cache.find(read_name) == read_cache.end()) {
@@ -174,14 +179,16 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
                    ++bin) {
 
            fprintf(
-             outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\t%d\n",
+             outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\t%d\t%d\t%d\n",
              header.IDtoName(curchr).c_str(),
              bin->first,
              bin->first + binwidth - 1,
              bin->second.n_corrected,
              bin->second.mean_fraglen,
              sqrt(bin->second.var_fraglen/(bin->second.n_frags)),
-             bin->second.n_frags
+             bin->second.n_frags,
+             bin->second.n_tot_reads,
+             bin->second.n_fail_reads
            );
            active_bins.erase(bin->first);
        }
@@ -190,13 +197,15 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
    // Print gaps
    for (uint64_t i = binmax; i + binwidth < record.Position(); i = i + binwidth) {
        fprintf(
-         outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\t%d\n",
+         outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\t%d\t%d\t%d\n",
          header.IDtoName(curchr).c_str(),
          i,
          i + binwidth - 1,
          0,
          0.0,
          0.0,
+         0,
+         0,
          0
        );
    }
@@ -205,10 +214,21 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
 
    // Add bins
    for (uint64_t i = binmax; i <= record.PositionEnd(); i = i + binwidth) {
-       active_bins.emplace(i, (target_counts_t ) { 0, 0, 0, 0 });
+       active_bins.emplace(i, (target_counts_t ) { 0, 0, 0, 0, 0, 0 });
    }
 
    binmax = MAX(binmax, ((record.PositionEnd() / binwidth) + 1) * binwidth);
+
+   // apply read filtering; record whether read was filtered
+   bool fail = walker::filter_read(record) || !record.ProperPair();
+   for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
+       if(record.Position() >= bin->first && record.Position() < bin->first + binwidth) {
+           bin->second.n_fail_reads += (int) fail;
+           bin->second.n_tot_reads++;
+           break;
+       }
+   }
+   if(fail) return 1;
 
    // this is the first read in the pair; push to cache
    if (read_cache.find(read_name) == read_cache.end()) {
