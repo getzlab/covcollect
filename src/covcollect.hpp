@@ -20,7 +20,9 @@ typedef struct t {
    uint32_t n_corrected;
    float mean_fraglen;
    float var_fraglen;
-   uint32_t n_reads;
+   uint32_t n_frags; // total number of analyzed fragments in this bin; used for computing iterative mean/variance
+   uint32_t n_tot_reads; // total number of reads in this bin; used for filtering bins with bad reads
+   uint32_t n_fail_reads; // number of reads failing filters
 } target_counts_t;
 
 typedef struct ea {

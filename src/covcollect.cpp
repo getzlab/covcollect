@@ -12,9 +12,10 @@ using namespace std;
 
 namespace CC {
 
-// override base filter to also remove non-proper paired reads
+// override base filter to noop; read filtering occurs within walk_apply, since
+// we are interested in tabulating the number of filtered reads
 bool cc_walker::filter_read(const SeqLib::BamRecord& record) {
-   return walker::filter_read(record) || !record.ProperPair();
+   return false;
 }
 
 void cc_walker::load_intervals(uint32_t pad, string chr, uint32_t start, uint32_t end) {
@@ -64,27 +65,31 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
       }
       read_cache.clear();
 
-      fprintf(outfile, "%s\t%d\t%d\t%d\t%0.0f\t%0.0f\t%d\n",
+      fprintf(outfile, "%s\t%d\t%d\t%d\t%0.0f\t%0.0f\t%d\t%d\t%d\n",
         header.IDtoName(cur_region.chr).c_str(),
         cur_region.pos1 + this->pad,
         cur_region.pos2 - this->pad,
         target_coverage.n_corrected,
         target_coverage.mean_fraglen,
-        sqrt(target_coverage.var_fraglen/(target_coverage.n_reads)),
-        target_coverage.n_reads
+        sqrt(target_coverage.var_fraglen/(target_coverage.n_frags)),
+        target_coverage.n_frags,
+        target_coverage.n_tot_reads,
+        target_coverage.n_fail_reads
       );
       target_coverage = {0, 0, 0, 0};
 
       // we may have skipped over multiple empty regions
       for(size_t r = cur_region_idx + 1; r < region_idx; r++) {
 	 SeqLib::GenomicRegion gr = intervals[r];
-	 fprintf(outfile, "%s\t%d\t%d\t%d\t%0.0f\t%0.0f\t%d\n",
+	 fprintf(outfile, "%s\t%d\t%d\t%d\t%0.0f\t%0.0f\t%d\t%d\t%d\n",
 	   header.IDtoName(gr.chr).c_str(),
 	   gr.pos1 + this->pad,
 	   gr.pos2 - this->pad,
 	   0,
 	   0.0,
 	   0.0,
+	   0,
+	   0,
 	   0
 	 );
       }
@@ -93,6 +98,12 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
       cur_region = intervals[region_idx];
       cur_region_idx = region_idx;
    }
+
+   // apply read filtering; record whether read was filtered
+   bool fail = walker::filter_read(record) || !record.ProperPair();
+   target_coverage.n_fail_reads += (int) fail;
+   target_coverage.n_tot_reads++;
+   if(fail) return 1;
 
    // this is the first read in the pair; push to cache
    if(read_cache.find(read_name) == read_cache.end()) {
@@ -110,14 +121,14 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 
       // update mean fragment length for this region
       uint32_t fraglen = record.PositionEnd() - read_cache[read_name].start;
-      if(target_coverage.n_reads == 0) {
+      if(target_coverage.n_frags == 0) {
           target_coverage.mean_fraglen = fraglen;
       } else {
           float fld = fraglen - target_coverage.mean_fraglen;
-          target_coverage.mean_fraglen += fld/(target_coverage.n_reads + 1);
+          target_coverage.mean_fraglen += fld/(target_coverage.n_frags + 1);
           target_coverage.var_fraglen += fld*(fraglen - target_coverage.mean_fraglen);
       }
-      target_coverage.n_reads++;
+      target_coverage.n_frags++;
 
       // remove from cache
       read_cache.erase(read_name);
@@ -158,8 +169,8 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
              bin->first + binwidth - 1,
              bin->second.n_corrected,
              bin->second.mean_fraglen,
-             sqrt(bin->second.var_fraglen/(bin->second.n_reads)),
-             bin->second.n_reads
+             sqrt(bin->second.var_fraglen/(bin->second.n_frags)),
+             bin->second.n_frags
            );
        }
        active_bins.clear();
@@ -174,14 +185,16 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
                    ++bin) {
 
            fprintf(
-             outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\t%d\n",
+             outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\t%d\t%d\t%d\n",
              header.IDtoName(curchr).c_str(),
              bin->first,
              bin->first + binwidth - 1,
              bin->second.n_corrected,
              bin->second.mean_fraglen,
-             sqrt(bin->second.var_fraglen/(bin->second.n_reads)),
-             bin->second.n_reads
+             sqrt(bin->second.var_fraglen/(bin->second.n_frags)),
+             bin->second.n_frags,
+             bin->second.n_tot_reads,
+             bin->second.n_fail_reads
            );
            active_bins.erase(bin->first);
        }
@@ -190,13 +203,15 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
    // Print gaps
    for (uint64_t i = binmax; i + binwidth < record.Position(); i = i + binwidth) {
        fprintf(
-         outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\t%d\n",
+         outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\t%d\t%d\t%d\n",
          header.IDtoName(curchr).c_str(),
          i,
          i + binwidth - 1,
          0,
          0.0,
          0.0,
+         0,
+         0,
          0
        );
    }
@@ -205,10 +220,21 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
 
    // Add bins
    for (uint64_t i = binmax; i <= record.PositionEnd(); i = i + binwidth) {
-       active_bins.emplace(i, (target_counts_t ) { 0, 0, 0, 0 });
+       active_bins.emplace(i, (target_counts_t ) { 0, 0, 0, 0, 0, 0 });
    }
 
    binmax = MAX(binmax, ((record.PositionEnd() / binwidth) + 1) * binwidth);
+
+   // apply read filtering; record whether read was filtered
+   bool fail = walker::filter_read(record) || !record.ProperPair();
+   for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
+       if(record.Position() >= bin->first && record.Position() < bin->first + binwidth) {
+           bin->second.n_fail_reads += (int) fail;
+           bin->second.n_tot_reads++;
+           break;
+       }
+   }
+   if(fail) return 1;
 
    // this is the first read in the pair; push to cache
    if (read_cache.find(read_name) == read_cache.end()) {
@@ -230,14 +256,14 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
            // update mean fragment length for this bin, if read's midpoint is in it
            if(midpoint >= bin->first && midpoint < bin->first + binwidth) {
                uint32_t fraglen = record.PositionEnd() - read_cache[read_name].start;
-               if(bin->second.n_reads == 0) {
+               if(bin->second.n_frags == 0) {
                    bin->second.mean_fraglen = fraglen;
                } else {
                    float fld = fraglen - bin->second.mean_fraglen;
-                   bin->second.mean_fraglen += fld/(bin->second.n_reads + 1);
+                   bin->second.mean_fraglen += fld/(bin->second.n_frags + 1);
                    bin->second.var_fraglen += fld*(fraglen - bin->second.mean_fraglen);
                }
-               bin->second.n_reads++;
+               bin->second.n_frags++;
            }
        }
 
