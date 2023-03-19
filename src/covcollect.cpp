@@ -346,7 +346,7 @@ bool cc_bin_walker_se::walk_apply(const SeqLib::BamRecord &record) {
    binmax = MAX(binmax, ((record.PositionEnd() / binwidth) + 1) * binwidth);
 
    // apply read filtering; record whether read was filtered
-   bool fail = walker::filter_read(record) || !record.ProperPair();
+   bool fail = walker::filter_read(record);
    for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
        if(record.Position() >= bin->first && record.Position() < bin->first + binwidth) {
            bin->second.n_fail_reads += (int) fail;
