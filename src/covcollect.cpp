@@ -12,6 +12,8 @@ using namespace std;
 
 namespace CC {
 
+/* target walker (for whole exomes) */
+
 // override base filter to noop; read filtering occurs within walk_apply, since
 // we are interested in tabulating the number of filtered reads
 bool cc_walker::filter_read(const SeqLib::BamRecord& record) {
@@ -136,6 +138,8 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord& record) {
 
    return 1;
 }
+
+/* bin walker (for whole genomes) */
 
 void cc_bin_walker::walk_all(string chr, uint32_t start, uint32_t end) {
    int32_t chr_idx = chr != "-1" ? header.Name2ID(chr) : -1;
@@ -275,11 +279,13 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
 
 }
 
+/* single ended bin walker */
+
 bool cc_bin_walker_se::walk_apply(const SeqLib::BamRecord &record) {
    std::string read_name = record.Qname();
    int32_t record_chr = record.ChrID();
 
-   // we've switched chromosomes; flush cache
+   // we've switched chromosomes; flush
    if (record_chr != curchr) {
        std::map<uint64_t, target_counts_t> ordered_active_bins(active_bins.begin(), active_bins.end());
        for (auto bin = ordered_active_bins.begin(); bin != ordered_active_bins.end(); ++bin) {
@@ -294,7 +300,6 @@ bool cc_bin_walker_se::walk_apply(const SeqLib::BamRecord &record) {
            );
        }
        active_bins.clear();
-       read_cache.clear();
        curchr = record_chr;
        binmax = 0;
    } else {
@@ -356,39 +361,23 @@ bool cc_bin_walker_se::walk_apply(const SeqLib::BamRecord &record) {
    }
    if(fail) return 1;
 
-   // this is the first read in the pair; push to cache
-   if (read_cache.find(read_name) == read_cache.end()) {
-       read_cache.emplace(
-         read_name,
-         (read_boundary_t ) {
-             (uint32_t) record.Position(),
-             (uint32_t) record.PositionEnd()
-         }
-       );
+   // write read to bins
+   uint32_t midpoint = (record.Position() + record.PositionEnd())/2;
+   for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
+	bin->second.n_corrected += n_overlap(bin->first, bin->first + binwidth, record.Position(), record.PositionEnd());
 
-   // this is the second read in the pair; write coverage to bins
-   } else {
-       uint32_t midpoint = (read_cache[read_name].start + record.PositionEnd())/2;
-
-       for (auto bin = active_bins.begin(); bin != active_bins.end(); bin++) {
-           bin->second.n_corrected += n_overlap(bin->first, bin->first + binwidth, read_cache[read_name].start, record.PositionEnd());
-
-           // update mean fragment length for this bin, if read's midpoint is in it
-           if(midpoint >= bin->first && midpoint < bin->first + binwidth) {
-               uint32_t fraglen = record.PositionEnd() - read_cache[read_name].start;
-               if(bin->second.n_frags == 0) {
-                   bin->second.mean_fraglen = fraglen;
-               } else {
-                   float fld = fraglen - bin->second.mean_fraglen;
-                   bin->second.mean_fraglen += fld/(bin->second.n_frags + 1);
-                   bin->second.var_fraglen += fld*(fraglen - bin->second.mean_fraglen);
-               }
-               bin->second.n_frags++;
-           }
-       }
-
-       // remove from cache
-       read_cache.erase(read_name);
+	// update mean fragment length for this bin, if read's midpoint is in it
+	if(midpoint >= bin->first && midpoint < bin->first + binwidth) {
+	    uint32_t fraglen = record.PositionEnd() - record.Position();
+	    if(bin->second.n_frags == 0) {
+		bin->second.mean_fraglen = fraglen;
+	    } else {
+		float fld = fraglen - bin->second.mean_fraglen;
+		bin->second.mean_fraglen += fld/(bin->second.n_frags + 1);
+		bin->second.var_fraglen += fld*(fraglen - bin->second.mean_fraglen);
+	    }
+	    bin->second.n_frags++;
+	}
    }
 
    return 1;
@@ -426,6 +415,13 @@ int main(int argc, char** argv) {
       }
    }
 
+   // parse input type, paired/singleendedness
+   optind = 1;
+   bool singleended = false;
+   while((arg = getopt(argc, argv, "S")) != -1) {
+      if(arg == 'S') singleended = true;
+   }
+
    bool use_bins = true;
 
    for (int i=0; i < args.input_file.length(); i++) {
@@ -438,16 +434,22 @@ int main(int argc, char** argv) {
    std::ifstream is_file(args.input_file);
 
    if (use_bins) {
-      CC::cc_bin_walker w = CC::cc_bin_walker(args.bam_in, stoi(args.input_file));   
-      if(!w.set_output_file(args.output_file)) exit(1);
-      w.walk_all(extra_args.chr, extra_args.start, extra_args.end);
+      if(!singleended) {
+	 CC::cc_bin_walker w = CC::cc_bin_walker(args.bam_in, stoi(args.input_file));   
+	 if(!w.set_output_file(args.output_file)) exit(1);
+	 w.walk_all(extra_args.chr, extra_args.start, extra_args.end);
+      } else {
+	 CC::cc_bin_walker_se w = CC::cc_bin_walker_se(args.bam_in, stoi(args.input_file));   
+	 if(!w.set_output_file(args.output_file)) exit(1);
+	 w.walk_all(extra_args.chr, extra_args.start, extra_args.end);
+      }
    } else if (is_file) {
       CC::cc_walker w = CC::cc_walker(args.bam_in, args.input_file);
       w.load_intervals(151, extra_args.chr, extra_args.start, extra_args.end);
       if(!w.set_output_file(args.output_file)) exit(1);
       w.walk_all();
    } else {
-      throw runtime_error("Invalid input to -i. Provide a positive interer for bin mode, or a valid file path to an interval file for interval mode.");
+      throw runtime_error("Invalid input to -i. Provide a positive integer for bin mode, or a valid file path to an interval file for interval mode.");
    }
 
    return 0;
