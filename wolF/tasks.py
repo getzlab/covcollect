@@ -14,4 +14,4 @@ class Covcollect(Task):
         return """/app/covcollect -b ${bam} -i ${intervals} -o coverage.bed -c ${subset_chr} -s ${subset_start} -e ${subset_end}
         """ + (" -S" if self.conf["inputs"]["single_ended"] else "")
     output_patterns = { "coverage" : "coverage.bed" }
-    docker = "gcr.io/broad-getzlab-workflows/covcollect:tot_reads_v201"
+    docker = "gcr.io/broad-getzlab-workflows/covcollect:v208"
