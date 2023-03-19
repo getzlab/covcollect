@@ -79,6 +79,13 @@ class cc_bin_walker : public cc_walker {
    std::string curchrname = "";
 };
 
+class cc_bin_walker_se : public cc_bin_walker {
+   public:
+   bool walk_apply(const SeqLib::BamRecord& record);
+
+   cc_bin_walker_se(const std::string& bam_in, const uint32_t binwidth) : cc_bin_walker(bam_in, binwidth) {}
+};
+
 }
 
 #endif
