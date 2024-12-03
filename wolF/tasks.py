@@ -11,7 +11,8 @@ class Covcollect(Task):
       "single_ended" : False
     }
     def script(self):
-        return "/app/covcollect -b ${bam} -i ${intervals} -o coverage.bed -c ${subset_chr} -s ${subset_start} -e ${subset_end}" + \
-          (" -S" if self.conf["inputs"]["single_ended"] else "")
+        return "\n".join(["/app/covcollect -b ${bam} -i ${intervals} -o coverage.bed -c ${subset_chr} -s ${subset_start} -e ${subset_end}" +
+                          (" -S" if self.conf["inputs"]["single_ended"] else ""), """awk -F'\t' "NF != 9 {exit 1}" coverage.bed"""])
+                          
     output_patterns = { "coverage" : "coverage.bed" }
     docker = "gcr.io/broad-getzlab-workflows/covcollect:v208"
