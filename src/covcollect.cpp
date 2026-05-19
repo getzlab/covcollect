@@ -72,22 +72,25 @@ bool cc_walker::walk_apply(const SeqLib::BamRecord &record) {
       // we do not use these reads for calculating fragment length.
     }
     read_cache.clear();
-
-    fprintf(outfile, "%s\t%d\t%d\t%d\t%0.0f\t%0.0f\t%d\t%d\t%d\n",
-            header.IDtoName(cur_region.chr).c_str(),
-            cur_region.pos1 + this->pad, cur_region.pos2 - this->pad,
-            target_coverage.n_corrected, target_coverage.mean_fraglen,
-            sqrt(target_coverage.var_fraglen / (target_coverage.n_frags)),
-            target_coverage.n_frags, target_coverage.n_tot_reads,
-            target_coverage.n_fail_reads);
+    if (cur_region.chr != -1) {
+      fprintf(outfile, "%s\t%d\t%d\t%d\t%0.0f\t%0.0f\t%d\t%d\t%d\n",
+              header.IDtoName(cur_region.chr).c_str(),
+              cur_region.pos1 + this->pad, cur_region.pos2 - this->pad,
+              target_coverage.n_corrected, target_coverage.mean_fraglen,
+              sqrt(target_coverage.var_fraglen / (target_coverage.n_frags)),
+              target_coverage.n_frags, target_coverage.n_tot_reads,
+              target_coverage.n_fail_reads);
+    }
     target_coverage = {0, 0, 0, 0};
 
     // we may have skipped over multiple empty regions
     for (size_t r = cur_region_idx + 1; r < region_idx; r++) {
       SeqLib::GenomicRegion gr = intervals[r];
-      fprintf(outfile, "%s\t%d\t%d\t%d\t%0.0f\t%0.0f\t%d\t%d\t%d\n",
-              header.IDtoName(gr.chr).c_str(), gr.pos1 + this->pad,
-              gr.pos2 - this->pad, 0, 0.0, 0.0, 0, 0, 0);
+      if (gr.chr != -1) {
+        fprintf(outfile, "%s\t%d\t%d\t%d\t%0.0f\t%0.0f\t%d\t%d\t%d\n",
+                header.IDtoName(gr.chr).c_str(), gr.pos1 + this->pad,
+                gr.pos2 - this->pad, 0, 0.0, 0.0, 0, 0, 0);
+      }
     }
 
     // switch to next region
@@ -166,12 +169,14 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
                                                             active_bins.end());
     for (auto bin = ordered_active_bins.begin();
          bin != ordered_active_bins.end(); ++bin) {
-      fprintf(outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\t%d\n",
-              header.IDtoName(curchr).c_str(), bin->first,
-              bin->first + binwidth - 1, bin->second.n_corrected,
-              bin->second.mean_fraglen,
-              sqrt(bin->second.var_fraglen / (bin->second.n_frags)),
-              bin->second.n_frags);
+      if (curchr != -1) {
+        fprintf(outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\t%d\n",
+                header.IDtoName(curchr).c_str(), bin->first,
+                bin->first + binwidth - 1, bin->second.n_corrected,
+                bin->second.mean_fraglen,
+                sqrt(bin->second.var_fraglen / (bin->second.n_frags)),
+                bin->second.n_frags);
+      }
     }
     active_bins.clear();
     read_cache.clear();
@@ -184,24 +189,28 @@ bool cc_bin_walker::walk_apply(const SeqLib::BamRecord &record) {
          bin->first + binwidth < record.Position() &&
          bin != ordered_active_bins.end();
          ++bin) {
+      if (curchr != -1) {
 
-      fprintf(outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\t%d\t%d\t%d\n",
-              header.IDtoName(curchr).c_str(), bin->first,
-              bin->first + binwidth - 1, bin->second.n_corrected,
-              bin->second.mean_fraglen,
-              sqrt(bin->second.var_fraglen / (bin->second.n_frags)),
-              bin->second.n_frags, bin->second.n_tot_reads,
-              bin->second.n_fail_reads);
+        fprintf(outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\t%d\t%d\t%d\n",
+                header.IDtoName(curchr).c_str(), bin->first,
+                bin->first + binwidth - 1, bin->second.n_corrected,
+                bin->second.mean_fraglen,
+                sqrt(bin->second.var_fraglen / (bin->second.n_frags)),
+                bin->second.n_frags, bin->second.n_tot_reads,
+                bin->second.n_fail_reads);
+      }
       active_bins.erase(bin->first);
     }
   }
 
   // Print gaps
-  for (uint64_t i = binmax; i + binwidth < record.Position();
-       i = i + binwidth) {
-    fprintf(outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\t%d\t%d\t%d\n",
-            header.IDtoName(curchr).c_str(), i, i + binwidth - 1, 0, 0.0, 0.0,
-            0, 0, 0);
+  if (curchr != -1) {
+    for (uint64_t i = binmax; i + binwidth < record.Position();
+         i = i + binwidth) {
+      fprintf(outfile, "%s\t%lu\t%lu\t%d\t%0.0f\t%0.0f\t%d\t%d\t%d\n",
+              header.IDtoName(curchr).c_str(), i, i + binwidth - 1, 0, 0.0, 0.0,
+              0, 0, 0);
+    }
   }
 
   binmax = MAX(binmax, (record.Position() / binwidth) * binwidth);
